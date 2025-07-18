@@ -1,751 +1,571 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sample Rate vs Aggregation Uncertainty</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-        
-        .control-group {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        label {
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #555;
-        }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        input[type="range"] {
-            flex: 1;
-            height: 6px;
-            background: #ddd;
-            border-radius: 3px;
-            outline: none;
-        }
-        
-        select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: white;
-            font-size: 14px;
-        }
-        
-        .value-display {
-            font-family: monospace;
-            font-size: 14px;
-            font-weight: bold;
-            color: #007acc;
-            min-width: 100px;
-        }
-        
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .metric-card {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .metric-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
-        .metric-values {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        
-        .true-value {
-            color: #28a745;
-            font-weight: bold;
-        }
-        
-        .sampled-value {
-            color: #dc3545;
-            font-weight: bold;
-        }
-        
-        .confidence-interval {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-        
-        .error-display {
-            font-size: 14px;
-            color: #6c757d;
-            margin-top: 10px;
-        }
-        
-        .info-panel {
-            background: #e7f3ff;
-            border-left: 4px solid #007acc;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .histogram {
-            width: 100%;
-            height: 200px;
-            border: 1px solid #ddd;
-            margin-top: 20px;
-        }
-        
-        .stats-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .stat-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-        
-        .runs-display {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div class="container">
-        <h1>Sample Rate vs Aggregation Uncertainty</h1>
-        
-        <div class="info-panel">
-            <strong>Demo:</strong> Adjust the volume, sample rate, and distribution to see how sampling affects aggregation accuracy. 
-            Confidence intervals are calculated from multiple sampling runs in real-time.
+      <h1>Sample Rate vs Aggregation Uncertainty</h1>
+
+      <div class="info-panel">
+        <strong>Demo:</strong> Adjust the volume, sample rate, and distribution to see how sampling affects aggregation accuracy. Confidence intervals are
+        calculated from multiple sampling runs in real-time.
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <label for="volume">Volume of Events (before sampling)</label>
+          <div class="slider-container">
+            <input type="range" id="volume" min="2" max="7" value="4" step="0.1" />
+            <span class="value-display" id="volumeValue">10,000</span>
+          </div>
         </div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label for="volume">Volume of Events (before sampling)</label>
-                <div class="slider-container">
-                    <input type="range" id="volume" min="2" max="7" value="4" step="0.1">
-                    <span class="value-display" id="volumeValue">10,000</span>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <label for="sampleRate">Sample Rate (keep 1 out of N events)</label>
-                <div class="slider-container">
-                    <input type="range" id="sampleRate" min="1" max="1000" value="10" step="1">
-                    <span class="value-display" id="sampleRateValue">1:10</span>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <label for="distribution">Distribution Type</label>
-                <select id="distribution">
-                    <option value="exponential">Exponential (λ=1)</option>
-                    <option value="normal">Normal (μ=100, σ=20)</option>
-                    <option value="uniform">Uniform (0-200)</option>
-                    <option value="lognormal">Log-Normal (μ=4, σ=1)</option>
-                    <option value="bimodal">Bimodal</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label for="plotMetric">Plot Metric</label>
-                <select id="plotMetric">
-                    <option value="count">COUNT</option>
-                    <option value="sum">SUM</option>
-                    <option value="average">AVERAGE</option>
-                    <option value="p99">P99</option>
-                </select>
-            </div>
+
+        <div class="control-group">
+          <label for="sampleRate">Sample Rate (keep 1 out of N events)</label>
+          <div class="slider-container">
+            <input type="range" id="sampleRate" min="1" max="1000" value="10" step="1" />
+            <span class="value-display" id="sampleRateValue">1:10</span>
+          </div>
         </div>
-        
-        <div class="stats-summary">
-            <div class="stat-item">
-                <div class="stat-label">Total Events</div>
-                <div class="stat-value" id="totalEvents">10,000</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Sampled Events</div>
-                <div class="stat-value" id="sampledEvents">1,000</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Sampling Ratio</div>
-                <div class="stat-value" id="samplingRatio">10.0%</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Theoretical Error</div>
-                <div class="stat-value" id="theoreticalError">±3.16%</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Simulation Runs</div>
-                <div class="stat-value" id="simulationRuns">50</div>
-            </div>
+
+        <div class="control-group">
+          <label for="distribution">Distribution Type</label>
+          <select id="distribution">
+            <option value="exponential">Exponential (λ=1)</option>
+            <option value="normal">Normal (μ=100, σ=20)</option>
+            <option value="uniform">Uniform (0-200)</option>
+            <option value="lognormal">Log-Normal (μ=4, σ=1)</option>
+            <option value="bimodal">Bimodal</option>
+          </select>
         </div>
-        
-        <div class="metrics">
-            <div class="metric-card">
-                <div class="metric-title">COUNT</div>
-                <div class="metric-values">
-                    <span>True: <span class="true-value" id="trueCount">0</span></span>
-                    <span>Sampled: <span class="sampled-value" id="sampledCount">0</span></span>
-                </div>
-                <div class="confidence-interval" id="countCI">95% CI: [0, 0]</div>
-                <div class="error-display">
-                    Error: <span id="countError">0.0%</span>
-                </div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-title">SUM</div>
-                <div class="metric-values">
-                    <span>True: <span class="true-value" id="trueSum">0</span></span>
-                    <span>Sampled: <span class="sampled-value" id="sampledSum">0</span></span>
-                </div>
-                <div class="confidence-interval" id="sumCI">95% CI: [0, 0]</div>
-                <div class="error-display">
-                    Error: <span id="sumError">0.0%</span>
-                </div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-title">AVERAGE</div>
-                <div class="metric-values">
-                    <span>True: <span class="true-value" id="trueAvg">0</span></span>
-                    <span>Sampled: <span class="sampled-value" id="sampledAvg">0</span></span>
-                </div>
-                <div class="confidence-interval" id="avgCI">95% CI: [0, 0]</div>
-                <div class="error-display">
-                    Error: <span id="avgError">0.0%</span>
-                </div>
-            </div>
-            
-            <div class="metric-card">
-                <div class="metric-title">P99</div>
-                <div class="metric-values">
-                    <span>True: <span class="true-value" id="trueP99">0</span></span>
-                    <span>Sampled: <span class="sampled-value" id="sampledP99">0</span></span>
-                </div>
-                <div class="confidence-interval" id="p99CI">95% CI: [0, 0]</div>
-                <div class="error-display">
-                    Error: <span id="p99Error">0.0%</span>
-                </div>
-            </div>
+
+        <div class="control-group">
+          <label for="plotMetric">Plot Metric</label>
+          <select id="plotMetric">
+            <option value="count">COUNT</option>
+            <option value="sum">SUM</option>
+            <option value="average">AVERAGE</option>
+            <option value="p99">P99</option>
+          </select>
         </div>
-        
-        <canvas id="simulationPlot" class="histogram"></canvas>
-        
-        <div class="runs-display" id="runsDisplay">
-            Running simulations...
+      </div>
+
+      <div class="stats-summary">
+        <div class="stat-item">
+          <div class="stat-label">Total Events</div>
+          <div class="stat-value" id="totalEvents">10,000</div>
         </div>
+        <div class="stat-item">
+          <div class="stat-label">Sampled Events</div>
+          <div class="stat-value" id="sampledEvents">1,000</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Sampling Ratio</div>
+          <div class="stat-value" id="samplingRatio">10.0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Theoretical Error</div>
+          <div class="stat-value" id="theoreticalError">±3.16%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Simulation Runs</div>
+          <div class="stat-value" id="simulationRuns">50</div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-title">COUNT</div>
+          <div class="metric-values">
+            <span>True: <span class="true-value" id="trueCount">0</span></span>
+            <span>Sampled: <span class="sampled-value" id="sampledCount">0</span></span>
+          </div>
+          <div class="confidence-interval" id="countCI">95% CI: [0, 0]</div>
+          <div class="error-display">Error: <span id="countError">0.0%</span></div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">SUM</div>
+          <div class="metric-values">
+            <span>True: <span class="true-value" id="trueSum">0</span></span>
+            <span>Sampled: <span class="sampled-value" id="sampledSum">0</span></span>
+          </div>
+          <div class="confidence-interval" id="sumCI">95% CI: [0, 0]</div>
+          <div class="error-display">Error: <span id="sumError">0.0%</span></div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">AVERAGE</div>
+          <div class="metric-values">
+            <span>True: <span class="true-value" id="trueAvg">0</span></span>
+            <span>Sampled: <span class="sampled-value" id="sampledAvg">0</span></span>
+          </div>
+          <div class="confidence-interval" id="avgCI">95% CI: [0, 0]</div>
+          <div class="error-display">Error: <span id="avgError">0.0%</span></div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">P99</div>
+          <div class="metric-values">
+            <span>True: <span class="true-value" id="trueP99">0</span></span>
+            <span>Sampled: <span class="sampled-value" id="sampledP99">0</span></span>
+          </div>
+          <div class="confidence-interval" id="p99CI">95% CI: [0, 0]</div>
+          <div class="error-display">Error: <span id="p99Error">0.0%</span></div>
+        </div>
+      </div>
+
+      <canvas id="simulationPlot" class="histogram"></canvas>
+
+      <div class="runs-display" id="runsDisplay">Running simulations...</div>
     </div>
 
     <script>
-        // Global variable to store latest results
-        let latestResults = null;
-        
-        // Update plot when metric selection changes
-        function updatePlotMetric() {
-            if (latestResults) {
-                const selectedMetric = document.getElementById('plotMetric').value;
-                drawSimulationPlot(latestResults.simulationResults, latestResults.true, selectedMetric);
-            }
+      // Global variable to store latest results
+      let latestResults = null;
+
+      // Update plot when metric selection changes
+      function updatePlotMetric() {
+        if (latestResults) {
+          const selectedMetric = document.getElementById("plotMetric").value;
+          drawSimulationPlot(latestResults.simulationResults, latestResults.true, selectedMetric);
         }
-        
-        let updateTimer = null;
-        let isUpdating = false;
-        
-        // Distribution generators
-        const distributions = {
-            exponential: () => -Math.log(Math.random()) * 100,
-            normal: () => {
-                // Box-Muller transform
-                const u1 = Math.random();
-                const u2 = Math.random();
-                const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                return z0 * 20 + 100;
-            },
-            uniform: () => Math.random() * 200,
-            lognormal: () => {
-                const u1 = Math.random();
-                const u2 = Math.random();
-                const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-                return Math.exp(z0 * 1 + 4);
-            },
-            bimodal: () => {
-                return Math.random() < 0.5 ? 
-                    Math.random() * 50 + 25 : 
-                    Math.random() * 50 + 125;
-            }
-        };
-        
-        // Generate synthetic event data
-        async function generateEvents(count, distributionType) {
-            // Limit to prevent memory issues
-            const maxEvents = 10000000; // 10M events max
-            if (count > maxEvents) {
-                throw new Error(`Event count ${count.toLocaleString()} exceeds maximum of ${maxEvents.toLocaleString()}`);
-            }
-            
-            const generator = distributions[distributionType];
-            const events = [];
-            
-            // Use batch processing for large datasets
-            const batchSize = 100000;
-            for (let batch = 0; batch < count; batch += batchSize) {
-                const batchEnd = Math.min(batch + batchSize, count);
-                for (let i = batch; i < batchEnd; i++) {
-                    events.push({
-                        id: i,
-                        value: Math.max(0, generator()) // Ensure non-negative values
-                    });
-                }
-                // Allow other operations if processing large dataset
-                if (batch > 0 && batch % (batchSize * 10) === 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1));
-                }
-            }
-            return events;
+      }
+
+      let updateTimer = null;
+      let isUpdating = false;
+
+      // Distribution generators
+      const distributions = {
+        exponential: () => -Math.log(Math.random()) * 100,
+        normal: () => {
+          // Box-Muller transform
+          const u1 = Math.random();
+          const u2 = Math.random();
+          const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          return z0 * 20 + 100;
+        },
+        uniform: () => Math.random() * 200,
+        lognormal: () => {
+          const u1 = Math.random();
+          const u2 = Math.random();
+          const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          return Math.exp(z0 * 1 + 4);
+        },
+        bimodal: () => {
+          return Math.random() < 0.5 ? Math.random() * 50 + 25 : Math.random() * 50 + 125;
+        },
+      };
+
+      // Generate synthetic event data
+      async function generateEvents(count, distributionType) {
+        // Limit to prevent memory issues
+        const maxEvents = 10000000; // 10M events max
+        if (count > maxEvents) {
+          throw new Error(`Event count ${count.toLocaleString()} exceeds maximum of ${maxEvents.toLocaleString()}`);
         }
-        
-        // Sample events using systematic sampling
-        function sampleEvents(events, sampleRate) {
-            const sampled = [];
-            for (let i = 0; i < events.length; i += sampleRate) {
-                sampled.push(events[i]);
-            }
-            return sampled;
-        }
-        
-        // Calculate P99 using nearest rank method
-        function calculateP99NearestRank(values) {
-            if (values.length === 0) return 0;
-            const sorted = values.slice().sort((a, b) => a - b);
-            const rank = Math.ceil(0.99 * sorted.length) - 1;
-            return sorted[Math.max(0, Math.min(rank, sorted.length - 1))];
-        }
-        
-        // Calculate aggregations
-        function calculateAggregations(events) {
-            const values = events.map(e => e.value);
-            const sum = values.reduce((a, b) => a + b, 0);
-            
-            return {
-                count: events.length,
-                sum: sum,
-                average: sum / events.length,
-                p99: calculateP99NearestRank(values)
-            };
-        }
-        
-        // Calculate confidence intervals
-        function calculateConfidenceIntervals(samples, confidenceLevel = 0.95) {
-            const alpha = 1 - confidenceLevel;
-            const lowerIndex = Math.floor(alpha / 2 * samples.length);
-            const upperIndex = Math.ceil((1 - alpha / 2) * samples.length) - 1;
-            
-            const sorted = samples.slice().sort((a, b) => a - b);
-            return {
-                lower: sorted[lowerIndex] || 0,
-                upper: sorted[upperIndex] || 0,
-                mean: samples.reduce((a, b) => a + b, 0) / samples.length
-            };
-        }
-        
-        // Run multiple simulations
-        async function runSimulations(volume, sampleRate, distributionType, numRuns = 50) {
-            // Safety checks
-            if (volume > 10000000) {
-                throw new Error(`Volume ${volume.toLocaleString()} exceeds safe limit of 10M events`);
-            }
-            
-            const results = {
-                count: [],
-                sum: [],
-                average: [],
-                p99: []
-            };
-            
-            // Generate one true dataset
-            const trueEvents = await generateEvents(volume, distributionType);
-            const trueAgg = calculateAggregations(trueEvents);
-            
-            // Run multiple sampling simulations
-            for (let i = 0; i < numRuns; i++) {
-                const sampledEvents = sampleEvents(trueEvents, sampleRate);
-                const sampledAgg = calculateAggregations(sampledEvents);
-                
-                // Scale up count and sum
-                results.count.push(sampledAgg.count * sampleRate);
-                results.sum.push(sampledAgg.sum * sampleRate);
-                results.average.push(sampledAgg.average);
-                results.p99.push(sampledAgg.p99);
-                
-                // Allow UI updates for long-running simulations
-                if (i % 10 === 0 && numRuns > 20) {
-                    await new Promise(resolve => setTimeout(resolve, 1));
-                }
-            }
-            
-            return {
-                true: trueAgg,
-                sampled: {
-                    count: calculateConfidenceIntervals(results.count),
-                    sum: calculateConfidenceIntervals(results.sum),
-                    average: calculateConfidenceIntervals(results.average),
-                    p99: calculateConfidenceIntervals(results.p99)
-                },
-                simulationResults: results,
-                rawData: {
-                    trueEvents: trueEvents,
-                    sampleEvents: sampleEvents(trueEvents, sampleRate)
-                }
-            };
-        }
-        
-        // Draw simulation results plot
-        function drawSimulationPlot(simulationResults, trueValues, selectedMetric = 'count') {
-            const canvas = document.getElementById('simulationPlot');
-            const ctx = canvas.getContext('2d');
-            
-            // Set canvas size
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            
-            const width = canvas.width;
-            const height = canvas.height;
-            const margin = { top: 20, right: 20, bottom: 40, left: 80 };
-            const plotWidth = width - margin.left - margin.right;
-            const plotHeight = height - margin.top - margin.bottom;
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-            
-            const results = simulationResults[selectedMetric];
-            const trueValue = trueValues[selectedMetric];
-            const ci = calculateConfidenceIntervals(results);
-            
-            if (results.length === 0) return;
-            
-            // Calculate scales
-            const minValue = Math.min(trueValue, ci.lower, ...results);
-            const maxValue = Math.max(trueValue, ci.upper, ...results);
-            const valueRange = maxValue - minValue;
-            const padding = valueRange * 0.1;
-            
-            const yMin = minValue - padding;
-            const yMax = maxValue + padding;
-            
-            // Scale functions
-            const xScale = (runNumber) => margin.left + (runNumber / (results.length - 1)) * plotWidth;
-            const yScale = (value) => margin.top + plotHeight - ((value - yMin) / (yMax - yMin)) * plotHeight;
-            
-            // Draw axes
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            // Y-axis
-            ctx.moveTo(margin.left, margin.top);
-            ctx.lineTo(margin.left, margin.top + plotHeight);
-            // X-axis
-            ctx.moveTo(margin.left, margin.top + plotHeight);
-            ctx.lineTo(margin.left + plotWidth, margin.top + plotHeight);
-            ctx.stroke();
-            
-            // Draw confidence interval band
-            ctx.fillStyle = 'rgba(220, 53, 69, 0.1)';
-            ctx.beginPath();
-            ctx.moveTo(margin.left, yScale(ci.lower));
-            ctx.lineTo(margin.left + plotWidth, yScale(ci.lower));
-            ctx.lineTo(margin.left + plotWidth, yScale(ci.upper));
-            ctx.lineTo(margin.left, yScale(ci.upper));
-            ctx.closePath();
-            ctx.fill();
-            
-            // Draw confidence interval lines
-            ctx.strokeStyle = 'rgba(220, 53, 69, 0.5)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(margin.left, yScale(ci.lower));
-            ctx.lineTo(margin.left + plotWidth, yScale(ci.lower));
-            ctx.moveTo(margin.left, yScale(ci.upper));
-            ctx.lineTo(margin.left + plotWidth, yScale(ci.upper));
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // Draw true value line
-            ctx.strokeStyle = '#28a745';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(margin.left, yScale(trueValue));
-            ctx.lineTo(margin.left + plotWidth, yScale(trueValue));
-            ctx.stroke();
-            
-            // Draw simulation points
-            ctx.fillStyle = '#dc3545';
-            results.forEach((value, i) => {
-                const x = xScale(i);
-                const y = yScale(value);
-                
-                ctx.beginPath();
-                ctx.arc(x, y, 3, 0, 2 * Math.PI);
-                ctx.fill();
+
+        const generator = distributions[distributionType];
+        const events = [];
+
+        // Use batch processing for large datasets
+        const batchSize = 100000;
+        for (let batch = 0; batch < count; batch += batchSize) {
+          const batchEnd = Math.min(batch + batchSize, count);
+          for (let i = batch; i < batchEnd; i++) {
+            events.push({
+              id: i,
+              value: Math.max(0, generator()), // Ensure non-negative values
             });
-            
-            // Draw sample mean line
-            ctx.strokeStyle = '#007acc';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([10, 5]);
-            ctx.beginPath();
-            ctx.moveTo(margin.left, yScale(ci.mean));
-            ctx.lineTo(margin.left + plotWidth, yScale(ci.mean));
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // Add labels
-            ctx.fillStyle = '#333';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Simulation Run Number', margin.left + plotWidth/2, height - 10);
-            
-            ctx.save();
-            ctx.translate(15, margin.top + plotHeight/2);
-            ctx.rotate(-Math.PI/2);
-            ctx.textAlign = 'center';
-            ctx.fillText(`${selectedMetric.toUpperCase()} Value`, 0, 0);
-            ctx.restore();
-            
-            // Add legend
-            const legendY = margin.top + 10;
-            ctx.textAlign = 'left';
-            ctx.font = '11px Arial';
-            
-            // True value
-            ctx.strokeStyle = '#28a745';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(margin.left + 10, legendY);
-            ctx.lineTo(margin.left + 30, legendY);
-            ctx.stroke();
-            ctx.fillStyle = '#28a745';
-            ctx.fillText('True Value', margin.left + 35, legendY + 4);
-            
-            // Sample mean
-            ctx.strokeStyle = '#007acc';
-            ctx.setLineDash([10, 5]);
-            ctx.beginPath();
-            ctx.moveTo(margin.left + 120, legendY);
-            ctx.lineTo(margin.left + 140, legendY);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#007acc';
-            ctx.fillText('Sample Mean', margin.left + 145, legendY + 4);
-            
-            // CI band
-            ctx.fillStyle = 'rgba(220, 53, 69, 0.3)';
-            ctx.fillRect(margin.left + 240, legendY - 3, 20, 6);
-            ctx.fillStyle = '#dc3545';
-            ctx.fillText('95% CI', margin.left + 265, legendY + 4);
-            
-            // Sample points
-            ctx.fillStyle = '#dc3545';
-            ctx.beginPath();
-            ctx.arc(margin.left + 350, legendY, 3, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.fillText('Samples', margin.left + 360, legendY + 4);
+          }
+          // Allow other operations if processing large dataset
+          if (batch > 0 && batch % (batchSize * 10) === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
         }
-        
-        // Format number for display
-        function formatNumber(num, decimals = 2) {
-            if (num > 1000000) {
-                return (num / 1000000).toFixed(1) + 'M';
-            } else if (num > 1000) {
-                return (num / 1000).toFixed(1) + 'K';
-            } else {
-                return num.toFixed(decimals);
-            }
+        return events;
+      }
+
+      // Sample events using systematic sampling
+      function sampleEvents(events, sampleRate) {
+        const sampled = [];
+        for (let i = 0; i < events.length; i += sampleRate) {
+          sampled.push(events[i]);
         }
-        
-        // Update display
-        async function updateDisplay() {
-            if (isUpdating) return;
-            isUpdating = true;
-            
-            const container = document.querySelector('.container');
-            container.classList.add('loading');
-            
-            try {
-                // Get log scale volume (10^x)
-                const volumeSlider = document.getElementById('volume').value;
-                const volume = Math.round(Math.pow(10, parseFloat(volumeSlider)));
-                const sampleRate = parseInt(document.getElementById('sampleRate').value);
-                const distributionType = document.getElementById('distribution').value;
-                
-                // Update slider displays
-                document.getElementById('volumeValue').textContent = volume.toLocaleString();
-                document.getElementById('sampleRateValue').textContent = `1:${sampleRate}`;
-                
-                // Adjust number of runs based on volume for performance
-                let numRuns;
-                if (volume > 1000000) {
-                    numRuns = 10;  // Fewer runs for very large datasets
-                } else if (volume > 100000) {
-                    numRuns = 20;
-                } else {
-                    numRuns = 50;
-                }
-                
-                // Show current run count
-                document.getElementById('simulationRuns').textContent = numRuns.toString();
-                document.getElementById('runsDisplay').textContent = `Running ${numRuns} simulations...`;
-                
-                // Allow UI to update
-                await new Promise(resolve => setTimeout(resolve, 10));
-                
-                // Run simulations
-                const results = await runSimulations(volume, sampleRate, distributionType, numRuns);
-                
-                // Update statistics summary
-                document.getElementById('totalEvents').textContent = volume.toLocaleString();
-                document.getElementById('sampledEvents').textContent = Math.ceil(volume / sampleRate).toLocaleString();
-                document.getElementById('samplingRatio').textContent = `${(100 / sampleRate).toFixed(1)}%`;
-                document.getElementById('theoreticalError').textContent = `±${(100 / Math.sqrt(volume / sampleRate)).toFixed(2)}%`;
-                
-                // Update metric displays
-                document.getElementById('trueCount').textContent = formatNumber(results.true.count);
-                document.getElementById('sampledCount').textContent = formatNumber(results.sampled.count.mean);
-                document.getElementById('countError').textContent = `${((results.sampled.count.mean - results.true.count) / results.true.count * 100).toFixed(1)}%`;
-                document.getElementById('countCI').textContent = `95% CI: [${formatNumber(results.sampled.count.lower)}, ${formatNumber(results.sampled.count.upper)}]`;
-                
-                document.getElementById('trueSum').textContent = formatNumber(results.true.sum);
-                document.getElementById('sampledSum').textContent = formatNumber(results.sampled.sum.mean);
-                document.getElementById('sumError').textContent = `${((results.sampled.sum.mean - results.true.sum) / results.true.sum * 100).toFixed(1)}%`;
-                document.getElementById('sumCI').textContent = `95% CI: [${formatNumber(results.sampled.sum.lower)}, ${formatNumber(results.sampled.sum.upper)}]`;
-                
-                document.getElementById('trueAvg').textContent = formatNumber(results.true.average);
-                document.getElementById('sampledAvg').textContent = formatNumber(results.sampled.average.mean);
-                document.getElementById('avgError').textContent = `${((results.sampled.average.mean - results.true.average) / results.true.average * 100).toFixed(1)}%`;
-                document.getElementById('avgCI').textContent = `95% CI: [${formatNumber(results.sampled.average.lower)}, ${formatNumber(results.sampled.average.upper)}]`;
-                
-                document.getElementById('trueP99').textContent = formatNumber(results.true.p99);
-                document.getElementById('sampledP99').textContent = formatNumber(results.sampled.p99.mean);
-                document.getElementById('p99Error').textContent = `${((results.sampled.p99.mean - results.true.p99) / results.true.p99 * 100).toFixed(1)}%`;
-                document.getElementById('p99CI').textContent = `95% CI: [${formatNumber(results.sampled.p99.lower)}, ${formatNumber(results.sampled.p99.upper)}]`;
-                
-                // Store results for plot metric switching
-                latestResults = results;
-                
-                // Draw simulation plot
-                const selectedMetric = document.getElementById('plotMetric').value;
-                drawSimulationPlot(results.simulationResults, results.true, selectedMetric);
-                
-                document.getElementById('runsDisplay').textContent = `Completed ${numRuns} simulations`;
-                
-            } catch (error) {
-                console.error('Error updating display:', error);
-                document.getElementById('runsDisplay').textContent = `Error: ${error.message}`;
-                
-                // Show user-friendly error message
-                const errorTypes = {
-                    'exceeds safe limit': 'Volume too large - maximum 10M events supported',
-                    'Maximum call stack': 'Memory limit exceeded - try smaller volume',
-                    'out of memory': 'Insufficient memory - reduce volume or sample rate'
-                };
-                
-                const userMessage = Object.keys(errorTypes).find(key => error.message.includes(key));
-                if (userMessage) {
-                    document.getElementById('runsDisplay').textContent = errorTypes[userMessage];
-                }
-            } finally {
-                container.classList.remove('loading');
-                isUpdating = false;
-            }
+        return sampled;
+      }
+
+      // Calculate P99 using nearest rank method
+      function calculateP99NearestRank(values) {
+        if (values.length === 0) return 0;
+        const sorted = values.slice().sort((a, b) => a - b);
+        const rank = Math.ceil(0.99 * sorted.length) - 1;
+        return sorted[Math.max(0, Math.min(rank, sorted.length - 1))];
+      }
+
+      // Calculate aggregations
+      function calculateAggregations(events) {
+        const values = events.map((e) => e.value);
+        const sum = values.reduce((a, b) => a + b, 0);
+
+        return {
+          count: events.length,
+          sum: sum,
+          average: sum / events.length,
+          p99: calculateP99NearestRank(values),
+        };
+      }
+
+      // Calculate confidence intervals
+      function calculateConfidenceIntervals(samples, confidenceLevel = 0.95) {
+        const alpha = 1 - confidenceLevel;
+        const lowerIndex = Math.floor((alpha / 2) * samples.length);
+        const upperIndex = Math.ceil((1 - alpha / 2) * samples.length) - 1;
+
+        const sorted = samples.slice().sort((a, b) => a - b);
+        return {
+          lower: sorted[lowerIndex] || 0,
+          upper: sorted[upperIndex] || 0,
+          mean: samples.reduce((a, b) => a + b, 0) / samples.length,
+        };
+      }
+
+      // Run multiple simulations
+      async function runSimulations(volume, sampleRate, distributionType, numRuns = 50) {
+        // Safety checks
+        if (volume > 10000000) {
+          throw new Error(`Volume ${volume.toLocaleString()} exceeds safe limit of 10M events`);
         }
-        
-        // Debounced update
-        function scheduleUpdate() {
-            if (updateTimer) {
-                clearTimeout(updateTimer);
-            }
-            updateTimer = setTimeout(updateDisplay, 100);
+
+        const results = {
+          count: [],
+          sum: [],
+          average: [],
+          p99: [],
+        };
+
+        // Generate one true dataset
+        const trueEvents = await generateEvents(volume, distributionType);
+        const trueAgg = calculateAggregations(trueEvents);
+
+        // Run multiple sampling simulations
+        for (let i = 0; i < numRuns; i++) {
+          const sampledEvents = sampleEvents(trueEvents, sampleRate);
+          const sampledAgg = calculateAggregations(sampledEvents);
+
+          // Scale up count and sum
+          results.count.push(sampledAgg.count * sampleRate);
+          results.sum.push(sampledAgg.sum * sampleRate);
+          results.average.push(sampledAgg.average);
+          results.p99.push(sampledAgg.p99);
+
+          // Allow UI updates for long-running simulations
+          if (i % 10 === 0 && numRuns > 20) {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
         }
-        
-        // Event listeners
-        document.getElementById('volume').addEventListener('input', scheduleUpdate);
-        document.getElementById('sampleRate').addEventListener('input', scheduleUpdate);
-        document.getElementById('distribution').addEventListener('change', scheduleUpdate);
-        document.getElementById('plotMetric').addEventListener('change', updatePlotMetric);
-        
-        // Initial update
-        updateDisplay();
+
+        return {
+          true: trueAgg,
+          sampled: {
+            count: calculateConfidenceIntervals(results.count),
+            sum: calculateConfidenceIntervals(results.sum),
+            average: calculateConfidenceIntervals(results.average),
+            p99: calculateConfidenceIntervals(results.p99),
+          },
+          simulationResults: results,
+          rawData: {
+            trueEvents: trueEvents,
+            sampleEvents: sampleEvents(trueEvents, sampleRate),
+          },
+        };
+      }
+
+      // Draw simulation results plot
+      function drawSimulationPlot(simulationResults, trueValues, selectedMetric = "count") {
+        const canvas = document.getElementById("simulationPlot");
+        const ctx = canvas.getContext("2d");
+
+        // Set canvas size
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const margin = { top: 20, right: 20, bottom: 40, left: 80 };
+        const plotWidth = width - margin.left - margin.right;
+        const plotHeight = height - margin.top - margin.bottom;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        const results = simulationResults[selectedMetric];
+        const trueValue = trueValues[selectedMetric];
+        const ci = calculateConfidenceIntervals(results);
+
+        if (results.length === 0) return;
+
+        // Calculate scales
+        const minValue = Math.min(trueValue, ci.lower, ...results);
+        const maxValue = Math.max(trueValue, ci.upper, ...results);
+        const valueRange = maxValue - minValue;
+        const padding = valueRange * 0.1;
+
+        const yMin = minValue - padding;
+        const yMax = maxValue + padding;
+
+        // Scale functions
+        const xScale = (runNumber) => margin.left + (runNumber / (results.length - 1)) * plotWidth;
+        const yScale = (value) => margin.top + plotHeight - ((value - yMin) / (yMax - yMin)) * plotHeight;
+
+        // Draw axes
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Y-axis
+        ctx.moveTo(margin.left, margin.top);
+        ctx.lineTo(margin.left, margin.top + plotHeight);
+        // X-axis
+        ctx.moveTo(margin.left, margin.top + plotHeight);
+        ctx.lineTo(margin.left + plotWidth, margin.top + plotHeight);
+        ctx.stroke();
+
+        // Draw confidence interval band
+        ctx.fillStyle = "rgba(220, 53, 69, 0.1)";
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yScale(ci.lower));
+        ctx.lineTo(margin.left + plotWidth, yScale(ci.lower));
+        ctx.lineTo(margin.left + plotWidth, yScale(ci.upper));
+        ctx.lineTo(margin.left, yScale(ci.upper));
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw confidence interval lines
+        ctx.strokeStyle = "rgba(220, 53, 69, 0.5)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yScale(ci.lower));
+        ctx.lineTo(margin.left + plotWidth, yScale(ci.lower));
+        ctx.moveTo(margin.left, yScale(ci.upper));
+        ctx.lineTo(margin.left + plotWidth, yScale(ci.upper));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw true value line
+        ctx.strokeStyle = "#28a745";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yScale(trueValue));
+        ctx.lineTo(margin.left + plotWidth, yScale(trueValue));
+        ctx.stroke();
+
+        // Draw simulation points
+        ctx.fillStyle = "#dc3545";
+        results.forEach((value, i) => {
+          const x = xScale(i);
+          const y = yScale(value);
+
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+
+        // Draw sample mean line
+        ctx.strokeStyle = "#007acc";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath();
+        ctx.moveTo(margin.left, yScale(ci.mean));
+        ctx.lineTo(margin.left + plotWidth, yScale(ci.mean));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Add labels
+        ctx.fillStyle = "#333";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Simulation Run Number", margin.left + plotWidth / 2, height - 10);
+
+        ctx.save();
+        ctx.translate(15, margin.top + plotHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = "center";
+        ctx.fillText(`${selectedMetric.toUpperCase()} Value`, 0, 0);
+        ctx.restore();
+
+        // Add legend
+        const legendY = margin.top + 10;
+        ctx.textAlign = "left";
+        ctx.font = "11px Arial";
+
+        // True value
+        ctx.strokeStyle = "#28a745";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(margin.left + 10, legendY);
+        ctx.lineTo(margin.left + 30, legendY);
+        ctx.stroke();
+        ctx.fillStyle = "#28a745";
+        ctx.fillText("True Value", margin.left + 35, legendY + 4);
+
+        // Sample mean
+        ctx.strokeStyle = "#007acc";
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath();
+        ctx.moveTo(margin.left + 120, legendY);
+        ctx.lineTo(margin.left + 140, legendY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#007acc";
+        ctx.fillText("Sample Mean", margin.left + 145, legendY + 4);
+
+        // CI band
+        ctx.fillStyle = "rgba(220, 53, 69, 0.3)";
+        ctx.fillRect(margin.left + 240, legendY - 3, 20, 6);
+        ctx.fillStyle = "#dc3545";
+        ctx.fillText("95% CI", margin.left + 265, legendY + 4);
+
+        // Sample points
+        ctx.fillStyle = "#dc3545";
+        ctx.beginPath();
+        ctx.arc(margin.left + 350, legendY, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillText("Samples", margin.left + 360, legendY + 4);
+      }
+
+      // Format number for display
+      function formatNumber(num, decimals = 2) {
+        if (num > 1000000) {
+          return (num / 1000000).toFixed(1) + "M";
+        } else if (num > 1000) {
+          return (num / 1000).toFixed(1) + "K";
+        } else {
+          return num.toFixed(decimals);
+        }
+      }
+
+      // Update display
+      async function updateDisplay() {
+        if (isUpdating) return;
+        isUpdating = true;
+
+        const container = document.querySelector(".container");
+        container.classList.add("loading");
+
+        try {
+          // Get log scale volume (10^x)
+          const volumeSlider = document.getElementById("volume").value;
+          const volume = Math.round(Math.pow(10, parseFloat(volumeSlider)));
+          const sampleRate = parseInt(document.getElementById("sampleRate").value);
+          const distributionType = document.getElementById("distribution").value;
+
+          // Update slider displays
+          document.getElementById("volumeValue").textContent = volume.toLocaleString();
+          document.getElementById("sampleRateValue").textContent = `1:${sampleRate}`;
+
+          // Adjust number of runs based on volume for performance
+          let numRuns;
+          if (volume > 1000000) {
+            numRuns = 10; // Fewer runs for very large datasets
+          } else if (volume > 100000) {
+            numRuns = 20;
+          } else {
+            numRuns = 50;
+          }
+
+          // Show current run count
+          document.getElementById("simulationRuns").textContent = numRuns.toString();
+          document.getElementById("runsDisplay").textContent = `Running ${numRuns} simulations...`;
+
+          // Allow UI to update
+          await new Promise((resolve) => setTimeout(resolve, 10));
+
+          // Run simulations
+          const results = await runSimulations(volume, sampleRate, distributionType, numRuns);
+
+          // Update statistics summary
+          document.getElementById("totalEvents").textContent = volume.toLocaleString();
+          document.getElementById("sampledEvents").textContent = Math.ceil(volume / sampleRate).toLocaleString();
+          document.getElementById("samplingRatio").textContent = `${(100 / sampleRate).toFixed(1)}%`;
+          document.getElementById("theoreticalError").textContent = `±${(100 / Math.sqrt(volume / sampleRate)).toFixed(2)}%`;
+
+          // Update metric displays
+          document.getElementById("trueCount").textContent = formatNumber(results.true.count);
+          document.getElementById("sampledCount").textContent = formatNumber(results.sampled.count.mean);
+          document.getElementById("countError").textContent = `${(((results.sampled.count.mean - results.true.count) / results.true.count) * 100).toFixed(1)}%`;
+          document.getElementById("countCI").textContent = `95% CI: [${formatNumber(results.sampled.count.lower)}, ${formatNumber(
+            results.sampled.count.upper
+          )}]`;
+
+          document.getElementById("trueSum").textContent = formatNumber(results.true.sum);
+          document.getElementById("sampledSum").textContent = formatNumber(results.sampled.sum.mean);
+          document.getElementById("sumError").textContent = `${(((results.sampled.sum.mean - results.true.sum) / results.true.sum) * 100).toFixed(1)}%`;
+          document.getElementById("sumCI").textContent = `95% CI: [${formatNumber(results.sampled.sum.lower)}, ${formatNumber(results.sampled.sum.upper)}]`;
+
+          document.getElementById("trueAvg").textContent = formatNumber(results.true.average);
+          document.getElementById("sampledAvg").textContent = formatNumber(results.sampled.average.mean);
+          document.getElementById("avgError").textContent = `${(((results.sampled.average.mean - results.true.average) / results.true.average) * 100).toFixed(
+            1
+          )}%`;
+          document.getElementById("avgCI").textContent = `95% CI: [${formatNumber(results.sampled.average.lower)}, ${formatNumber(
+            results.sampled.average.upper
+          )}]`;
+
+          document.getElementById("trueP99").textContent = formatNumber(results.true.p99);
+          document.getElementById("sampledP99").textContent = formatNumber(results.sampled.p99.mean);
+          document.getElementById("p99Error").textContent = `${(((results.sampled.p99.mean - results.true.p99) / results.true.p99) * 100).toFixed(1)}%`;
+          document.getElementById("p99CI").textContent = `95% CI: [${formatNumber(results.sampled.p99.lower)}, ${formatNumber(results.sampled.p99.upper)}]`;
+
+          // Store results for plot metric switching
+          latestResults = results;
+
+          // Draw simulation plot
+          const selectedMetric = document.getElementById("plotMetric").value;
+          drawSimulationPlot(results.simulationResults, results.true, selectedMetric);
+
+          document.getElementById("runsDisplay").textContent = `Completed ${numRuns} simulations`;
+        } catch (error) {
+          console.error("Error updating display:", error);
+          document.getElementById("runsDisplay").textContent = `Error: ${error.message}`;
+
+          // Show user-friendly error message
+          const errorTypes = {
+            "exceeds safe limit": "Volume too large - maximum 10M events supported",
+            "Maximum call stack": "Memory limit exceeded - try smaller volume",
+            "out of memory": "Insufficient memory - reduce volume or sample rate",
+          };
+
+          const userMessage = Object.keys(errorTypes).find((key) => error.message.includes(key));
+          if (userMessage) {
+            document.getElementById("runsDisplay").textContent = errorTypes[userMessage];
+          }
+        } finally {
+          container.classList.remove("loading");
+          isUpdating = false;
+        }
+      }
+
+      // Debounced update
+      function scheduleUpdate() {
+        if (updateTimer) {
+          clearTimeout(updateTimer);
+        }
+        updateTimer = setTimeout(updateDisplay, 100);
+      }
+
+      // Event listeners
+      document.getElementById("volume").addEventListener("input", scheduleUpdate);
+      document.getElementById("sampleRate").addEventListener("input", scheduleUpdate);
+      document.getElementById("distribution").addEventListener("change", scheduleUpdate);
+      document.getElementById("plotMetric").addEventListener("change", updatePlotMetric);
+
+      // Initial update
+      updateDisplay();
     </script>
-</body>
+  </body>
 </html>
