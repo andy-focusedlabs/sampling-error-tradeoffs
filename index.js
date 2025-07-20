@@ -600,13 +600,16 @@ async function generateEvents(count, distributionType) {
   return events;
 }
 
-// Sample events using systematic sampling
-// Since events are generated randomly, this is equivalent to random... except that it is more precise.
-// Perhaps randomly sampling is more accurate to how Refinery does this, but
+// Sample events using random sampling
+// Each event has a 1/sampleRate probability of being included
 function sampleEvents(events, sampleRate) {
   const sampled = [];
-  for (let i = 0; i < events.length; i += sampleRate) {
-    sampled.push(events[i]);
+  const probability = 1 / sampleRate;
+
+  for (let i = 0; i < events.length; i++) {
+    if (Math.random() < probability) {
+      sampled.push(events[i]);
+    }
   }
   return sampled;
 }
