@@ -2,6 +2,7 @@
 
 - make the sliders land on round numbers
 - make the default distribution 'normal'
+- use Honeycomb colors
 
 - understand the code
 
@@ -10,3 +11,5 @@
   - plot both the real value, from the original generated data
   - and the value calculated from the sampled data
 - then think about how to represent error bars.
+
+
