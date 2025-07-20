@@ -12,4 +12,4 @@
   - and the value calculated from the sampled data
 - then think about how to represent error bars.
 
-
+- provide a graph of the distribution
