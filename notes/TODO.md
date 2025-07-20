@@ -4,6 +4,7 @@
   [x] make the default distribution 'normal'
 - use Honeycomb colors
 - make it display event count before and after sampling
+- max sample rate should be 100,000
 
 - understand the code
 
@@ -18,7 +19,7 @@
 - add a power law distribution
 - make it sample randomly instead of every N. With every N, COUNT is always perfectly accurate.
 
-
 ## Not for PoC:
+
 - make a real project structure, with code in modules
 - make it use streaming instead of holding all events in memory
