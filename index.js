@@ -1120,6 +1120,8 @@ function updateExplanation(volume, sampleRate, numRuns) {
   const explanationDiv = document.querySelector(".explanation");
   const sampledEvents = Math.ceil(volume / sampleRate);
 
+  const percentageReduction = ((1 - 1 / sampleRate) * 100).toFixed(1);
+
   // Calculate trapezoid dimensions based on sample rate
   // Bottom width = top width / sample rate
   // We'll use percentages to create the trapezoid effect
@@ -1140,6 +1142,7 @@ function updateExplanation(volume, sampleRate, numRuns) {
     <p><span style="color: ${HONEYCOMB_COLORS.lime}; font-weight: bold;">${volume.toLocaleString()} events go in</span></p>
     <p>to ${numRuns} simulations</p>
     <p>Sampled at a rate of 1:${sampleRate}</p>
+    <p>Saving you ${percentageReduction}%</p>
     <p><span style="color: ${HONEYCOMB_COLORS.red500}; font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
     <p>Then we aggregate the sampled events.</p>
     <p>The following charts compare the results of aggregating sampled events (knowing the sample rate) vs aggregating the full set of events.</p>

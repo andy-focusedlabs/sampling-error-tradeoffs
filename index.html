@@ -11,21 +11,43 @@
     <div class="container">
       <h1>Sample Rate vs Aggregation Uncertainty</h1>
 
-      <div class="purpose">
-        <strong>Purpose:</strong> Your app generates a lot of telemetry. You want to drop redundant data to save money, but you still want live aggregations
-        over that data to be accurate. The answer is sampling: keep enough for accurate aggregations, and drop the rest. But how much can you sample before you
-        can't trust your graphs? The answer is different per situation, depending on data volume and the probably distribution of the numbers you're
-        aggregating. This tool can give you a sense for it.
-      </div>
+      <div class="intro-section">
+        <div class="purpose-card">
+          <div class="card-icon">🎯</div>
+          <div class="card-content">
+            <h3>Purpose</h3>
+            <p>
+              Your application generates massive amounts of telemetry data. While you want to reduce storage costs by dropping redundant data, you still need
+              accurate live aggregations. <strong>Sampling</strong> is the solution—but how much can you sample before your metrics become unreliable?
+            </p>
+            <p>
+              This interactive tool helps you understand the trade-offs between sample rates and aggregation accuracy for different data volumes and
+              distributions.
+            </p>
+          </div>
+        </div>
 
-      <div class="disclaimer">
-        Disclaimer: this was coded with a LOT of AI assistance. We haven't checked the math. In particular, I don't trust the confidence interval calculations.
-        The simulations and aggregations seem right.
-      </div>
+        <div class="demo-card">
+          <div class="card-icon">🔬</div>
+          <div class="card-content">
+            <h3>Interactive Demo</h3>
+            <p>
+              Adjust the volume, sample rate, and distribution parameters below to see real-time simulations of how sampling affects aggregation accuracy.
+              Confidence intervals are calculated from multiple sampling runs.
+            </p>
+          </div>
+        </div>
 
-      <div class="info-panel">
-        <strong>Demo:</strong> Adjust the volume, sample rate, and distribution to see how sampling affects aggregation accuracy. Confidence intervals are
-        calculated from multiple sampling runs in real-time.
+        <div class="disclaimer-card">
+          <div class="card-icon">⚠️</div>
+          <div class="card-content">
+            <h3>Disclaimer</h3>
+            <p>
+              This tool was developed with AI assistance. While the simulations and aggregations appear correct, the confidence interval calculations should be
+              independently verified before use in production decisions.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="controls">
@@ -68,6 +90,7 @@
         <p>{number of events} events go in</p>
         <p>to {number of simulations} simulations</p>
         <p>Sampled at a rate of 1:{sample rate}</p>
+        <p>Saving you {percentage reduction}</p>
         <p>About {number of events / sample rate} events come out</p>
         <p>Then we aggregate the sampled events.</p>
         <p>The following charts compare the results of aggregating sampled events (knowing the sample rate) vs aggregating the full set of events.</p>
