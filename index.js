@@ -306,6 +306,7 @@ function drawP99ScatterPlot(results, yAxisMode = "zoomed") {
           borderColor: "#dc3545",
           pointRadius: 4,
           pointHoverRadius: 6,
+          pointStyle: "rect",
         },
       ],
     },

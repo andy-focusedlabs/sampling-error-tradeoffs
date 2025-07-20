@@ -11,6 +11,13 @@
     <div class="container">
       <h1>Sample Rate vs Aggregation Uncertainty</h1>
 
+      <div class="purpose">
+        <strong>Purpose:</strong> Your app generates a lot of telemetry. You want to drop redundant data to save money, but you still want live aggregations
+        over that data to be accurate. The answer is sampling: keep enough for accurate aggregations, and drop the rest. But how much can you sample before you
+        can't trust your graphs? The answer is different per situation, depending on data volume and the probably distribution of the numbers you're
+        aggregating. This tool can give you a sense for it.
+      </div>
+
       <div class="info-panel">
         <strong>Demo:</strong> Adjust the volume, sample rate, and distribution to see how sampling affects aggregation accuracy. Confidence intervals are
         calculated from multiple sampling runs in real-time.
