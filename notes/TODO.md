@@ -18,6 +18,7 @@
 - make the bimodal distribution like two normal distributions
 - add a power law distribution
 - make it sample randomly instead of every N. With every N, COUNT is always perfectly accurate.
+- make it use the other method to calculate P99, the one Retriever probably uses
 
 ## Not for PoC:
 

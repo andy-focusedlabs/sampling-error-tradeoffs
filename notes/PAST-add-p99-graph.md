@@ -61,7 +61,8 @@ The chart should be a scatter plot.
 ### Implementation Notes:
 
 - The true P99 values need to be calculated from the original unsampled data for each simulation run
-- Each simulation should generate its own dataset, then calculate both true P99 (from full data) and sampled P99 (from sampled data)
+- Each simulation should generate its own dataset, then calculate both true P99 (from full data)
+ and sampled P99 (from sampled data)
 - True P99 values (green points) will vary per simulation since each uses different generated data
 - Sampled P99 values (red points) will also vary per simulation and show sampling error
 - X-axis values are simulation indices (1, 2, 3, ..., numRuns)
