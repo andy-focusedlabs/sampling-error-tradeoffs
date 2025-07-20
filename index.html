@@ -17,12 +17,10 @@
           <div class="card-content">
             <h3>Purpose</h3>
             <p>
-              Your application generates massive amounts of telemetry data. While you want to reduce storage costs by dropping redundant data, you still need
-              accurate live aggregations. <strong>Sampling</strong> is the solution—but how much can you sample before your metrics become unreliable?
-            </p>
-            <p>
-              This interactive tool helps you understand the trade-offs between sample rates and aggregation accuracy for different data volumes and
-              distributions.
+              Your app generates a lot of telemetry. You want to drop redundant data to save money, but you still want live aggregations over that data to be
+              accurate. The answer is sampling: keep enough for accurate aggregations, and drop the rest. But how much can you sample before you can't trust
+              your graphs? The answer is different per situation, depending on data volume and the probably distribution of the numbers you're aggregating. This
+              tool can give you a sense for it.
             </p>
           </div>
         </div>
@@ -43,8 +41,8 @@
           <div class="card-content">
             <h3>Disclaimer</h3>
             <p>
-              This tool was developed with AI assistance. While the simulations and aggregations appear correct, the confidence interval calculations should be
-              independently verified before use in production decisions.
+              This was coded with a LOT of AI assistance. We haven't checked the math. In particular, I don't trust the confidence interval calculations. The
+              simulations and aggregations seem right.
             </p>
           </div>
         </div>
