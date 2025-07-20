@@ -589,6 +589,43 @@ function betaContinuedFraction(x, alpha, beta) {
   return h;
 }
 
+// Get theoretical distribution parameters (mean and variance)
+function getDistributionParameters(distributionType) {
+  switch (distributionType) {
+    case "exponential":
+      // Exponential with rate λ = 1/100: E[X] = 100, Var[X] = 100²
+      return { mean: 100, variance: 10000 };
+
+    case "normal":
+      // Normal with μ=100, σ=20: E[X] = 100, Var[X] = 400
+      return { mean: 100, variance: 400 };
+
+    case "uniform":
+      // Uniform [0, 200]: E[X] = 100, Var[X] = (200²)/12 = 3333.33
+      return { mean: 100, variance: (200 * 200) / 12 };
+
+    case "lognormal":
+      // Lognormal with μ=4, σ=1: E[X] = exp(μ + σ²/2), Var[X] = (exp(σ²) - 1) * exp(2μ + σ²)
+      const mu = 4;
+      const sigma = 1;
+      const lognormalMean = Math.exp(mu + (sigma * sigma) / 2);
+      const lognormalVariance = (Math.exp(sigma * sigma) - 1) * Math.exp(2 * mu + sigma * sigma);
+      return { mean: lognormalMean, variance: lognormalVariance };
+
+    case "bimodal":
+      // Mixture of two uniforms: 0.5 * Uniform(25, 75) + 0.5 * Uniform(125, 175)
+      // E[X] = 0.5 * 50 + 0.5 * 150 = 100
+      // Var[X] = 0.5 * (Var[U1] + (50-100)²) + 0.5 * (Var[U2] + (150-100)²)
+      // where Var[U1] = Var[U2] = 50²/12
+      const uniformVar = (50 * 50) / 12;
+      const bimodalVariance = 0.5 * (uniformVar + 50 * 50) + 0.5 * (uniformVar + 50 * 50);
+      return { mean: 100, variance: bimodalVariance };
+
+    default:
+      throw new Error(`Unknown distribution type: ${distributionType}`);
+  }
+}
+
 // Calculate theoretical quantiles for known distributions
 function getTheoreticalQuantile(distributionType, p) {
   switch (distributionType) {
@@ -620,6 +657,92 @@ function getTheoreticalQuantile(distributionType, p) {
     default:
       throw new Error(`Unknown distribution type: ${distributionType}`);
   }
+}
+
+// Calculate theoretical confidence interval for COUNT using known sample size
+function calculateTheoreticalCountConfidenceInterval(sampledCounts, sampleRate, confidenceLevel = 0.95) {
+  const n = sampledCounts.length;
+  if (n === 0) return { lower: 0, upper: 0, mean: 0 };
+
+  const mean = sampledCounts.reduce((a, b) => a + b, 0) / sampledCounts.length;
+
+  // For systematic sampling, COUNT is deterministic within each simulation
+  // The only variation comes from different random datasets across simulations
+  // Since we generate fresh data each time, there's minimal variation in count
+  const empiricalVariance = sampledCounts.reduce((sum, count) => sum + Math.pow(count - mean, 2), 0) / (n - 1);
+  const stderr = Math.sqrt(empiricalVariance / n);
+
+  const alpha = 1 - confidenceLevel;
+  const z = normalInverse(1 - alpha / 2);
+
+  return {
+    lower: Math.max(0, mean - z * stderr),
+    upper: mean + z * stderr,
+    mean: mean,
+  };
+}
+
+// Calculate theoretical confidence interval for SUM using Central Limit Theorem
+function calculateTheoreticalSumConfidenceInterval(sampledSums, distributionType, sampleRate, confidenceLevel = 0.95) {
+  const n = sampledSums.length;
+  if (n === 0) return { lower: 0, upper: 0, mean: 0 };
+
+  const distParams = getDistributionParameters(distributionType);
+  const mean = sampledSums.reduce((a, b) => a + b, 0) / sampledSums.length;
+
+  // For SUM of m samples from distribution with variance σ²:
+  // Var[Sum] = m * σ²
+  // After scaling up by sampleRate: Var[ScaledSum] = (sampleRate²) * m * σ²
+  const samplesPerSimulation = sampledSums[0] / sampleRate / distParams.mean; // Approximate
+  const theoreticalVariance = sampleRate * sampleRate * samplesPerSimulation * distParams.variance;
+
+  // Standard error of the mean across simulations
+  const stderr = Math.sqrt(theoreticalVariance / n);
+
+  const alpha = 1 - confidenceLevel;
+  const z = normalInverse(1 - alpha / 2);
+
+  return {
+    lower: mean - z * stderr,
+    upper: mean + z * stderr,
+    mean: mean,
+  };
+}
+
+// Calculate theoretical confidence interval for AVERAGE using Central Limit Theorem
+function calculateTheoreticalAverageConfidenceInterval(sampledAverages, distributionType, sampleRate, confidenceLevel = 0.95) {
+  const n = sampledAverages.length;
+  if (n === 0) return { lower: 0, upper: 0, mean: 0 };
+
+  const distParams = getDistributionParameters(distributionType);
+  const mean = sampledAverages.reduce((a, b) => a + b, 0) / sampledAverages.length;
+
+  // AVERAGE is unbiased, so the main source of variation is sampling variation
+  // Each simulation samples different events, leading to different averages
+  // Use the theoretical variance of the sample mean
+
+  // Estimate sample size per simulation (volume / sampleRate)
+  // We can estimate this from the relationship between theoretical mean and observed variation
+  const empiricalVariance = sampledAverages.reduce((sum, avg) => sum + Math.pow(avg - mean, 2), 0) / (n - 1);
+
+  // The empirical variance should approximate the theoretical variance of sample means
+  // For sample mean: Var[X̄] = σ²/m where m is sample size per simulation
+  // So we can estimate: m ≈ σ²/empiricalVariance
+  const estimatedSampleSize = Math.max(1, distParams.variance / Math.max(empiricalVariance, 1e-10));
+  const theoreticalStderr = Math.sqrt(distParams.variance / estimatedSampleSize / n);
+
+  // Use the more conservative of empirical or theoretical stderr
+  const empiricalStderr = Math.sqrt(empiricalVariance / n);
+  const stderr = Math.max(empiricalStderr, theoreticalStderr);
+
+  const alpha = 1 - confidenceLevel;
+  const z = normalInverse(1 - alpha / 2);
+
+  return {
+    lower: mean - z * stderr,
+    upper: mean + z * stderr,
+    mean: mean,
+  };
 }
 
 // Calculate theoretical confidence interval for P99 using order statistics
@@ -669,11 +792,23 @@ function calculateConfidenceIntervalsEmpirical(samples, confidenceLevel = 0.95) 
   };
 }
 
-// Updated confidence interval calculation that uses theoretical method for P99
-function calculateConfidenceIntervals(samples, confidenceLevel = 0.95, metricType = null, distributionType = null) {
-  if (metricType === "p99" && distributionType) {
-    return calculateTheoreticalP99ConfidenceInterval(samples, distributionType, confidenceLevel);
-  } else {
+// Updated confidence interval calculation that uses theoretical methods for all metrics
+function calculateConfidenceIntervals(samples, confidenceLevel = 0.95, metricType = null, distributionType = null, sampleRate = null) {
+  try {
+    switch (metricType) {
+      case "count":
+        return calculateTheoreticalCountConfidenceInterval(samples, sampleRate, confidenceLevel);
+      case "sum":
+        return calculateTheoreticalSumConfidenceInterval(samples, distributionType, sampleRate, confidenceLevel);
+      case "average":
+        return calculateTheoreticalAverageConfidenceInterval(samples, distributionType, sampleRate, confidenceLevel);
+      case "p99":
+        return calculateTheoreticalP99ConfidenceInterval(samples, distributionType, confidenceLevel);
+      default:
+        return calculateConfidenceIntervalsEmpirical(samples, confidenceLevel);
+    }
+  } catch (error) {
+    console.warn(`Theoretical CI calculation failed for ${metricType}, falling back to empirical:`, error);
     return calculateConfidenceIntervalsEmpirical(samples, confidenceLevel);
   }
 }
@@ -731,10 +866,10 @@ async function runSimulations(volume, sampleRate, distributionType, numRuns = 50
   return {
     true: trueAgg,
     sampled: {
-      count: calculateConfidenceIntervals(results.count),
-      sum: calculateConfidenceIntervals(results.sum),
-      average: calculateConfidenceIntervals(results.average),
-      p99: calculateConfidenceIntervals(results.p99, 0.95, "p99", distributionType),
+      count: calculateConfidenceIntervals(results.count, 0.95, "count", distributionType, sampleRate),
+      sum: calculateConfidenceIntervals(results.sum, 0.95, "sum", distributionType, sampleRate),
+      average: calculateConfidenceIntervals(results.average, 0.95, "average", distributionType, sampleRate),
+      p99: calculateConfidenceIntervals(results.p99, 0.95, "p99", distributionType, sampleRate),
     },
     simulationResults: results,
     scatterPlotData: scatterPlotData,

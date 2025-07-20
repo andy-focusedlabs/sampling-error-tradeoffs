@@ -62,7 +62,9 @@ The chart should be a scatter plot.
 
 - The true P99 values need to be calculated from the original unsampled data for each simulation run
 - Each simulation should generate its own dataset, then calculate both true P99 (from full data)
- and sampled P99 (from sampled data)
+
+and sampled P99 (from sampled data)
+
 - True P99 values (green points) will vary per simulation since each uses different generated data
 - Sampled P99 values (red points) will also vary per simulation and show sampling error
 - X-axis values are simulation indices (1, 2, 3, ..., numRuns)
@@ -74,3 +76,12 @@ The chart should be a scatter plot.
 - Current `runSimulations()` generates one dataset and samples it multiple times
 - Need to modify to generate fresh data for each simulation run
 - Store both true and sampled P99 for each run
+
+
+## Next phase: add confidence interval markings
+
+I want to show on the graph the 95% confidence interval around the sampled P99 values.
+What are some ways to display a confidence interval around a point?
+
+(put some options here)
+
