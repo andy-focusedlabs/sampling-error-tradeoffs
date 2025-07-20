@@ -263,7 +263,7 @@ function updateDistributionChart(distributionType) {
 }
 
 // Create or update the P99 scatter plot
-function drawP99ScatterPlot(results, yAxisMode = "zoomed") {
+function drawP99ScatterPlot(results, yAxisMode = "full") {
   const ctx = document.getElementById("p99ScatterChart").getContext("2d");
 
   // Destroy existing chart if it exists
