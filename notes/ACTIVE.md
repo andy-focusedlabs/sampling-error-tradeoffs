@@ -19,17 +19,17 @@ The chart should be a scatter plot.
 
 ### Phase 1: Add HTML Structure for P99 Scatter Plot
 
-- [ ] Add a new chart container section below the existing distribution chart
-- [ ] Include canvas element with ID "p99ScatterChart"
-- [ ] Add appropriate CSS styling to match existing chart container
+- [x] Add a new chart container section below the existing distribution chart
+- [x] Include canvas element with ID "p99ScatterChart"
+- [x] Add appropriate CSS styling to match existing chart container
 
 ### Phase 2: Implement P99 Scatter Plot Function
 
-- [ ] Create `drawP99ScatterPlot(results)` function in index.js
-- [ ] Use Chart.js scatter plot type with two datasets:
+- [x] Create `drawP99ScatterPlot(results)` function in index.js
+- [x] Use Chart.js scatter plot type with two datasets:
   - Green points for true P99 values (one per simulation)
   - Red points for sampled P99 values (one per simulation)
-- [ ] Configure chart with:
+- [x] Configure chart with:
   - Title: "P99 For Each Simulation, Before and After Sampling"
   - X-axis: Simulation number (1 to numRuns)
   - Y-axis: P99 value
@@ -37,26 +37,26 @@ The chart should be a scatter plot.
 
 ### Phase 3: Integrate with Simulation Flow
 
-- [ ] Add call to `drawP99ScatterPlot(results)` in the `updateDisplay()` function
-- [ ] Ensure chart updates when parameters change
-- [ ] Handle chart destruction/recreation properly
-- [ ] Store chart instance globally for cleanup
+- [x] Add call to `drawP99ScatterPlot(results)` in the `updateDisplay()` function
+- [x] Ensure chart updates when parameters change
+- [x] Handle chart destruction/recreation properly
+- [x] Store chart instance globally for cleanup
 
 ### Phase 4: Data Preparation
 
-- [ ] Extract sampled P99 data from `results.simulationResults.p99` array
-- [ ] Calculate true P99 for each simulation from the original unsampled data
-- [ ] Create data points for true P99 (one per simulation from unsampled data)
-- [ ] Create data points for sampled P99 (one per simulation run)
-- [ ] Format data for Chart.js scatter plot format
+- [x] Extract sampled P99 data from `results.simulationResults.p99` array
+- [x] Calculate true P99 for each simulation from the original unsampled data
+- [x] Create data points for true P99 (one per simulation from unsampled data)
+- [x] Create data points for sampled P99 (one per simulation run)
+- [x] Format data for Chart.js scatter plot format
 
 ### Phase 5: Chart Configuration & Styling
 
-- [ ] Configure responsive behavior
-- [ ] Set up proper axis labels and ranges
-- [ ] Add legend to distinguish true vs sampled values
-- [ ] Ensure consistent styling with existing charts
-- [ ] Add hover tooltips for data points
+- [x] Configure responsive behavior
+- [x] Set up proper axis labels and ranges
+- [x] Add legend to distinguish true vs sampled values
+- [x] Ensure consistent styling with existing charts
+- [x] Add hover tooltips for data points
 
 ### Implementation Notes:
 

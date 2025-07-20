@@ -53,7 +53,16 @@
       </div>
 
       <div class="p99-scatter-chart">
-        <h3>P99 For Each Simulation, Before and After Sampling</h3>
+        <div class="chart-header">
+          <h3>P99 For Each Simulation, Before and After Sampling</h3>
+          <div class="chart-controls">
+            <label for="p99YAxisToggle">Y-axis:</label>
+            <select id="p99YAxisToggle">
+              <option value="zoomed" selected>Zoomed (auto-scale)</option>
+              <option value="full">Full scale (from 0)</option>
+            </select>
+          </div>
+        </div>
         <div class="chart-container">
           <canvas id="p99ScatterChart"></canvas>
         </div>
