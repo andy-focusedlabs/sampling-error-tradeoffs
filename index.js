@@ -1,3 +1,21 @@
+// Honeycomb color constants
+const HONEYCOMB_COLORS = {
+  fog: "#F5F7FA",
+  pacific: "#0177CC",
+  slate: "#25303E",
+  denim: "#02487B",
+  honey: "#FFBC03",
+  tango: "#F16907",
+  lime: "#63BA01",
+  indigo: "#542A8F",
+  gray300: "#C8D1DF",
+  gray500: "#8F99A8",
+  gray600: "#717A89",
+  sky100: "#B9DEF8",
+  red500: "#E65B53",
+  green600: "#63BA01",
+};
+
 // Custom plugin to draw vertical lines for average and P99
 const verticalLinePlugin = {
   id: "verticalLines",
@@ -11,7 +29,7 @@ const verticalLinePlugin = {
       // Draw average line
       if (average !== undefined) {
         const x = scales.x.getPixelForValue(average);
-        ctx.strokeStyle = "#28a745";
+        ctx.strokeStyle = HONEYCOMB_COLORS.lime;
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -20,7 +38,7 @@ const verticalLinePlugin = {
         ctx.stroke();
 
         // Draw average label
-        ctx.fillStyle = "#28a745";
+        ctx.fillStyle = HONEYCOMB_COLORS.lime;
         ctx.font = "11px Arial";
         ctx.fillText(`Avg: ${average.toFixed(1)}`, x + 5, chartArea.top + 15);
       }
@@ -28,7 +46,7 @@ const verticalLinePlugin = {
       // Draw P99 line
       if (p99 !== undefined) {
         const x = scales.x.getPixelForValue(p99);
-        ctx.strokeStyle = "#dc3545";
+        ctx.strokeStyle = HONEYCOMB_COLORS.red500;
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -37,7 +55,7 @@ const verticalLinePlugin = {
         ctx.stroke();
 
         // Draw P99 label
-        ctx.fillStyle = "#dc3545";
+        ctx.fillStyle = HONEYCOMB_COLORS.red500;
         ctx.font = "11px Arial";
         ctx.fillText(`P99: ${p99.toFixed(1)}`, x + 5, chartArea.top + 30);
       }
@@ -205,8 +223,8 @@ function updateDistributionChart(distributionType) {
         {
           label: "Probability Density",
           data: data,
-          borderColor: "#007acc",
-          backgroundColor: "rgba(0, 122, 204, 0.1)",
+          borderColor: HONEYCOMB_COLORS.pacific,
+          backgroundColor: HONEYCOMB_COLORS.pacific + "1A", // 10% opacity
           fill: true,
           tension: 0.1,
           pointRadius: 0,
@@ -243,7 +261,7 @@ function updateDistributionChart(distributionType) {
             text: "Value",
           },
           grid: {
-            color: "rgba(0, 0, 0, 0.1)",
+            color: HONEYCOMB_COLORS.gray300 + "40", // 25% opacity
           },
         },
         y: {
@@ -252,7 +270,7 @@ function updateDistributionChart(distributionType) {
             text: "Probability Density",
           },
           grid: {
-            color: "rgba(0, 0, 0, 0.1)",
+            color: HONEYCOMB_COLORS.gray300 + "40", // 25% opacity
           },
           beginAtZero: true,
         },
@@ -270,8 +288,8 @@ const metricConfigs = {
   count: {
     title: "COUNT For Each Simulation, Before and After Sampling",
     yAxisLabel: "Count",
-    trueColor: "#28a745",
-    sampledColor: "#dc3545",
+    trueColor: HONEYCOMB_COLORS.lime,
+    sampledColor: HONEYCOMB_COLORS.red500,
     canvasId: "countScatterChart",
     chartVariable: "countScatterChart",
     trueLabel: "True COUNT",
@@ -291,8 +309,8 @@ const metricConfigs = {
   sum: {
     title: "SUM For Each Simulation, Before and After Sampling",
     yAxisLabel: "Sum",
-    trueColor: "#28a745",
-    sampledColor: "#dc3545",
+    trueColor: HONEYCOMB_COLORS.lime,
+    sampledColor: HONEYCOMB_COLORS.red500,
     canvasId: "sumScatterChart",
     chartVariable: "sumScatterChart",
     trueLabel: "True SUM",
@@ -312,8 +330,8 @@ const metricConfigs = {
   average: {
     title: "AVERAGE For Each Simulation, Before and After Sampling",
     yAxisLabel: "Average",
-    trueColor: "#28a745",
-    sampledColor: "#dc3545",
+    trueColor: HONEYCOMB_COLORS.lime,
+    sampledColor: HONEYCOMB_COLORS.red500,
     canvasId: "averageScatterChart",
     chartVariable: "averageScatterChart",
     trueLabel: "True AVERAGE",
@@ -329,8 +347,8 @@ const metricConfigs = {
   p99: {
     title: "P99 For Each Simulation, Before and After Sampling",
     yAxisLabel: "P99 Value",
-    trueColor: "#28a745",
-    sampledColor: "#dc3545",
+    trueColor: HONEYCOMB_COLORS.lime,
+    sampledColor: HONEYCOMB_COLORS.red500,
     canvasId: "p99ScatterChart",
     chartVariable: "p99ScatterChart",
     trueLabel: "True P99",
@@ -414,8 +432,8 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
         {
           label: "95% Confidence Interval",
           data: ciLowerData,
-          backgroundColor: "rgba(128, 128, 128, 0.2)",
-          borderColor: "rgba(128, 128, 128, 0.4)",
+          backgroundColor: HONEYCOMB_COLORS.gray500 + "33", // 20% opacity
+          borderColor: HONEYCOMB_COLORS.gray500 + "66", // 40% opacity
           borderWidth: 1,
           fill: false,
           pointRadius: 0,
@@ -428,8 +446,8 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
         {
           label: "", // Empty label so it doesn't show in legend
           data: ciUpperData,
-          backgroundColor: "rgba(128, 128, 128, 0.2)",
-          borderColor: "rgba(128, 128, 128, 0.4)",
+          backgroundColor: HONEYCOMB_COLORS.gray500 + "33", // 20% opacity
+          borderColor: HONEYCOMB_COLORS.gray500 + "66", // 40% opacity
           borderWidth: 1,
           fill: "-1", // Fill to the previous dataset (ciLowerData)
           pointRadius: 0,
@@ -501,7 +519,7 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
             text: "Simulation Number",
           },
           grid: {
-            color: "rgba(0, 0, 0, 0.1)",
+            color: HONEYCOMB_COLORS.gray300 + "40", // 25% opacity
           },
           min: 0.5,
           max: numRuns + 0.5,
@@ -512,7 +530,7 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
             text: config.yAxisLabel,
           },
           grid: {
-            color: "rgba(0, 0, 0, 0.1)",
+            color: HONEYCOMB_COLORS.gray300 + "40", // 25% opacity
           },
           beginAtZero: yAxisMode === "full",
           ticks: {
@@ -1116,10 +1134,10 @@ function updateExplanation(volume, sampleRate, numRuns) {
   explanationDiv.style.setProperty("--bottom-right-x", bottomRightX);
 
   explanationDiv.innerHTML = `
-    <p><span style="color: #28a745; font-weight: bold;">${volume.toLocaleString()} events go in</span></p>
+    <p><span style="color: ${HONEYCOMB_COLORS.lime}; font-weight: bold;">${volume.toLocaleString()} events go in</span></p>
     <p>to ${numRuns} simulations</p>
     <p>Sampled at a rate of 1:${sampleRate}</p>
-    <p><span style="color: #dc3545; font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
+    <p><span style="color: ${HONEYCOMB_COLORS.red500}; font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
     <p>Then we aggregate the sampled events.</p>
     <p>The following charts compare the results of aggregating sampled events (knowing the sample rate) vs aggregating the full set of events.</p>
   `;
