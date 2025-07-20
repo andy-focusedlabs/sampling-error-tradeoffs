@@ -962,10 +962,10 @@ function updateExplanation(volume, sampleRate, numRuns) {
   explanationDiv.style.setProperty("--bottom-right-x", bottomRightX);
 
   explanationDiv.innerHTML = `
-    <p>${volume.toLocaleString()} events go in</p>
+    <p><span style="color: #28a745; font-weight: bold;">${volume.toLocaleString()} events go in</span></p>
     <p>to ${numRuns} simulations</p>
     <p>Sampled at a rate of 1:${sampleRate}</p>
-    <p>About ${sampledEvents.toLocaleString()} events come out</p>
+    <p><span style="color: #dc3545; font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
     <p>Then we aggregate the sampled events.</p>
     <p>The following charts compare the results of aggregating sampled events (knowing the sample rate) vs aggregating the full set of events.</p>
   `;
