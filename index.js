@@ -332,6 +332,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
           tension: 0,
           order: 3,
           type: "line",
+          hidden: false, // Keep visible but hide from legend
         },
         {
           label: "True P99",
@@ -370,6 +371,10 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
         legend: {
           display: true,
           position: "top",
+          filter: function (legendItem, chartData) {
+            // Hide datasets with empty labels (the upper CI bound)
+            return legendItem.text !== "";
+          },
         },
       },
       scales: {
