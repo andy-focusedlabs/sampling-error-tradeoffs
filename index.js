@@ -307,11 +307,11 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
       datasets: [
         {
           label: "95% Confidence Interval",
-          data: ciUpperData,
+          data: ciLowerData,
           backgroundColor: "rgba(128, 128, 128, 0.2)",
           borderColor: "rgba(128, 128, 128, 0.4)",
           borderWidth: 1,
-          fill: "+1", // Fill to the next dataset (ciLowerData)
+          fill: false,
           pointRadius: 0,
           pointHoverRadius: 0,
           showLine: true,
@@ -321,10 +321,11 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
         },
         {
           label: "", // Empty label so it doesn't show in legend
-          data: ciLowerData,
+          data: ciUpperData,
           backgroundColor: "rgba(128, 128, 128, 0.2)",
           borderColor: "rgba(128, 128, 128, 0.4)",
           borderWidth: 1,
+          fill: "-1", // Fill to the previous dataset (ciLowerData)
           pointRadius: 0,
           pointHoverRadius: 0,
           showLine: true,
