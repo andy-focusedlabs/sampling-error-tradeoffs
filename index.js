@@ -940,6 +940,21 @@ function formatNumber(num, decimals = 2) {
   }
 }
 
+// Update explanation div with current values
+function updateExplanation(volume, sampleRate, numRuns) {
+  const explanationDiv = document.querySelector(".explanation");
+  const sampledEvents = Math.ceil(volume / sampleRate);
+
+  explanationDiv.innerHTML = `
+    <p>${volume.toLocaleString()} events go in</p>
+    <p>to ${numRuns} simulations</p>
+    <p>Sampled at a rate of 1:${sampleRate}</p>
+    <p>About ${sampledEvents.toLocaleString()} events come out</p>
+    <p>Then we aggregate the sampled events.</p>
+    <p>The following charts compare the results of aggregating sampled events (knowing the sample rate) vs aggregating the full set of events.</p>
+  `;
+}
+
 // Update display
 async function updateDisplay() {
   if (isUpdating) return;
@@ -971,6 +986,9 @@ async function updateDisplay() {
     } else {
       numRuns = 50;
     }
+
+    // Update explanation with current values
+    updateExplanation(volume, sampleRate, numRuns);
 
     // Show current run count
     document.getElementById("simulationRuns").textContent = numRuns.toString();
