@@ -59,6 +59,9 @@ let isUpdating = false;
 // Chart instances
 let distributionChart = null;
 let p99ScatterChart = null;
+let countScatterChart = null;
+let sumScatterChart = null;
+let averageScatterChart = null;
 
 // Distribution generators
 const distributions = {
@@ -262,37 +265,82 @@ function updateDistributionChart(distributionType) {
   });
 }
 
-// Create or update the P99 scatter plot
-function drawP99ScatterPlot(results, yAxisMode = "full") {
-  const ctx = document.getElementById("p99ScatterChart").getContext("2d");
+// Metric configuration for scatter plots
+const metricConfigs = {
+  count: {
+    title: "COUNT For Each Simulation, Before and After Sampling",
+    yAxisLabel: "Count",
+    trueColor: "#28a745",
+    sampledColor: "#dc3545",
+    canvasId: "countScatterChart",
+    chartVariable: "countScatterChart",
+  },
+  sum: {
+    title: "SUM For Each Simulation, Before and After Sampling",
+    yAxisLabel: "Sum",
+    trueColor: "#28a745",
+    sampledColor: "#dc3545",
+    canvasId: "sumScatterChart",
+    chartVariable: "sumScatterChart",
+  },
+  average: {
+    title: "AVERAGE For Each Simulation, Before and After Sampling",
+    yAxisLabel: "Average",
+    trueColor: "#28a745",
+    sampledColor: "#dc3545",
+    canvasId: "averageScatterChart",
+    chartVariable: "averageScatterChart",
+  },
+  p99: {
+    title: "P99 For Each Simulation, Before and After Sampling",
+    yAxisLabel: "P99 Value",
+    trueColor: "#28a745",
+    sampledColor: "#dc3545",
+    canvasId: "p99ScatterChart",
+    chartVariable: "p99ScatterChart",
+  },
+};
+
+// Generic scatter plot function for any metric
+function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
+  const config = metricConfigs[metricType];
+  if (!config) {
+    throw new Error(`Unknown metric type: ${metricType}`);
+  }
+
+  const ctx = document.getElementById(config.canvasId).getContext("2d");
 
   // Destroy existing chart if it exists
-  if (p99ScatterChart) {
-    p99ScatterChart.destroy();
+  const chartVariable = window[config.chartVariable];
+  if (chartVariable) {
+    chartVariable.destroy();
   }
 
   // Prepare data for scatter plot
-  const numRuns = results.scatterPlotData.trueP99.length;
-  const trueP99Data = [];
-  const sampledP99Data = [];
+  const trueDataKey = `true${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`;
+  const sampledDataKey = `sampled${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`;
+
+  const numRuns = results.scatterPlotData[trueDataKey].length;
+  const trueData = [];
+  const sampledData = [];
 
   for (let i = 0; i < numRuns; i++) {
-    trueP99Data.push({
+    trueData.push({
       x: i + 1, // Simulation number (1-based)
-      y: results.scatterPlotData.trueP99[i],
+      y: results.scatterPlotData[trueDataKey][i],
     });
-    sampledP99Data.push({
+    sampledData.push({
       x: i + 1, // Simulation number (1-based)
-      y: results.scatterPlotData.sampledP99[i],
+      y: results.scatterPlotData[sampledDataKey][i],
     });
   }
 
   // Add confidence interval background shading
   const ciLowerData = [];
   const ciUpperData = [];
-  if (results.sampled && results.sampled.p99) {
-    const ciLower = results.sampled.p99.lower;
-    const ciUpper = results.sampled.p99.upper;
+  if (results.sampled && results.sampled[metricType]) {
+    const ciLower = results.sampled[metricType].lower;
+    const ciUpper = results.sampled[metricType].upper;
 
     // Create line datasets for upper and lower bounds
     for (let i = 0; i <= numRuns + 1; i++) {
@@ -301,7 +349,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
     }
   }
 
-  p99ScatterChart = new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: "scatter",
     data: {
       datasets: [
@@ -335,20 +383,20 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
           hidden: false, // Keep visible but hide from legend
         },
         {
-          label: "Sampled P99",
-          data: sampledP99Data,
-          backgroundColor: "#dc3545",
-          borderColor: "#dc3545",
+          label: `Sampled ${metricType.toUpperCase()}`,
+          data: sampledData,
+          backgroundColor: config.sampledColor,
+          borderColor: config.sampledColor,
           pointRadius: 5,
           pointHoverRadius: 7,
           pointStyle: "rect",
           order: 2,
         },
         {
-          label: "True P99",
-          data: trueP99Data,
-          backgroundColor: "#28a745",
-          borderColor: "#28a745",
+          label: `True ${metricType.toUpperCase()}`,
+          data: trueData,
+          backgroundColor: config.trueColor,
+          borderColor: config.trueColor,
           pointRadius: 4,
           pointHoverRadius: 6,
           order: 1,
@@ -362,7 +410,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
       plugins: {
         title: {
           display: true,
-          text: "P99 For Each Simulation, Before and After Sampling",
+          text: config.title,
           font: {
             size: 14,
             weight: "bold",
@@ -371,7 +419,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
         legend: {
           display: true,
           position: "top",
-          filter: function (legendItem, chartData) {
+          filter: function (legendItem) {
             // Hide datasets with empty labels (the upper CI bound)
             return legendItem.text !== "";
           },
@@ -393,7 +441,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
         y: {
           title: {
             display: true,
-            text: "P99 Value",
+            text: config.yAxisLabel,
           },
           grid: {
             color: "rgba(0, 0, 0, 0.1)",
@@ -407,6 +455,14 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
       },
     },
   });
+
+  // Store chart in global variable
+  window[config.chartVariable] = chart;
+}
+
+// Create or update the P99 scatter plot (refactored to use generic function)
+function drawP99ScatterPlot(results, yAxisMode = "full") {
+  drawMetricScatterPlot("p99", results, yAxisMode);
 }
 
 // Generate synthetic event data
@@ -880,6 +936,12 @@ async function runSimulations(volume, sampleRate, distributionType, numRuns = 50
   const scatterPlotData = {
     trueP99: [],
     sampledP99: [],
+    trueCount: [],
+    sampledCount: [],
+    trueSum: [],
+    sampledSum: [],
+    trueAverage: [],
+    sampledAverage: [],
   };
 
   // Generate one true dataset for overall metrics
@@ -899,6 +961,12 @@ async function runSimulations(volume, sampleRate, distributionType, numRuns = 50
     // Store data for scatter plot
     scatterPlotData.trueP99.push(simulationTrueAgg.p99);
     scatterPlotData.sampledP99.push(sampledAgg.p99);
+    scatterPlotData.trueCount.push(simulationTrueAgg.count);
+    scatterPlotData.sampledCount.push(sampledAgg.count * sampleRate);
+    scatterPlotData.trueSum.push(simulationTrueAgg.sum);
+    scatterPlotData.sampledSum.push(sampledAgg.sum * sampleRate);
+    scatterPlotData.trueAverage.push(simulationTrueAgg.average);
+    scatterPlotData.sampledAverage.push(sampledAgg.average);
 
     // Scale up count and sum for confidence intervals
     results.count.push(sampledAgg.count * sampleRate);

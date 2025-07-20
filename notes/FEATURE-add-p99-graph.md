@@ -1,133 +1,187 @@
-# Active work
+# P99 Scatter Plot Feature Implementation
 
-the goal is to help people understand what is happening in the app.
-the app runs 50 simulations, and it calculates aggregations before and after sampling.
-I need to show that in a chart.
+## Overview
 
-We'll start with the P99 aggregation. It is most interesting.
+This feature adds a scatter plot visualization showing P99 values for each simulation run, comparing the "true" P99 (calculated from the full generated dataset) against the "sampled" P99 (calculated from the sampled subset). This helps users understand how sampling affects P99 accuracy across multiple simulation runs.
 
-The chart should be a scatter plot.
+## Final Implementation
 
-- the title is: P99 For Each Simulation, Before and After Sampling
-- the x axis is simulation number, 1-50.
-- the y axis is P99.
-- for each simulation run, plot two points:
-  - the true P99, in green
-  - the sampled P99, in red
+### Chart Structure
 
-## Plan
+- **Chart Type**: Scatter plot using Chart.js
+- **X-axis**: Simulation number (1 to numRuns)
+- **Y-axis**: P99 value
+- **Data Points**:
+  - Green circles (radius 4): True P99 values
+  - Red squares (radius 5): Sampled P99 values
+- **Background**: Gray shaded area showing 95% confidence interval
+- **Controls**: Y-axis toggle (Full scale vs Zoomed)
 
-### Phase 1: Add HTML Structure for P99 Scatter Plot
+### Key Technical Decisions
 
-- [x] Add a new chart container section below the existing distribution chart
-- [x] Include canvas element with ID "p99ScatterChart"
-- [x] Add appropriate CSS styling to match existing chart container
+#### 1. Data Generation Strategy
 
-### Phase 2: Implement P99 Scatter Plot Function
+**Final Approach**: Generate separate datasets for each simulation run
 
-- [x] Create `drawP99ScatterPlot(results)` function in index.js
-- [x] Use Chart.js scatter plot type with two datasets:
-  - Green points for true P99 values (one per simulation)
-  - Red points for sampled P99 values (one per simulation)
-- [x] Configure chart with:
-  - Title: "P99 For Each Simulation, Before and After Sampling"
-  - X-axis: Simulation number (1 to numRuns)
-  - Y-axis: P99 value
-  - Appropriate colors and styling
+- Each simulation creates its own random dataset using `generateEvents()`
+- Calculate true P99 from the full dataset
+- Sample the dataset and calculate sampled P99
+- Store both values in `scatterPlotData` object
 
-### Phase 3: Integrate with Simulation Flow
+**Why This Works**: Shows both natural variation in P99 (due to random data generation) and sampling error, which is what users need to understand.
 
-- [x] Add call to `drawP99ScatterPlot(results)` in the `updateDisplay()` function
-- [x] Ensure chart updates when parameters change
-- [x] Handle chart destruction/recreation properly
-- [x] Store chart instance globally for cleanup
+#### 2. Confidence Interval Visualization
 
-### Phase 4: Data Preparation
+**Final Approach**: Background shading (Option 5)
 
-- [x] Extract sampled P99 data from `results.simulationResults.p99` array
-- [x] Calculate true P99 for each simulation from the original unsampled data
-- [x] Create data points for true P99 (one per simulation from unsampled data)
-- [x] Create data points for sampled P99 (one per simulation run)
-- [x] Format data for Chart.js scatter plot format
+- Uses theoretical confidence intervals calculated across all simulations
+- Implemented as two line chart datasets with `fill: "-1"` to create shaded area
+- Single legend entry "95% Confidence Interval"
 
-### Phase 5: Chart Configuration & Styling
+**Why This Works**: The theoretical CI represents the expected range where sampled P99 values should fall, so a horizontal band across the entire chart is the correct visualization.
 
-- [x] Configure responsive behavior
-- [x] Set up proper axis labels and ranges
-- [x] Add legend to distinguish true vs sampled values
-- [x] Ensure consistent styling with existing charts
-- [x] Add hover tooltips for data points
+#### 3. Point Styling for Visibility
 
-### Implementation Notes:
+**Final Approach**: Different shapes and sizes
 
-- The true P99 values need to be calculated from the original unsampled data for each simulation run
-- Each simulation should generate its own dataset, then calculate both true P99 (from full data)
+- True P99: Green circles (smaller, on top)
+- Sampled P99: Red squares (larger, behind)
+- Larger squares "peek out" from behind smaller circles when values are close
 
-and sampled P99 (from sampled data)
+**Why This Works**: Ensures both datasets are visible even when values overlap closely.
 
-- True P99 values (green points) will vary per simulation since each uses different generated data
-- Sampled P99 values (red points) will also vary per simulation and show sampling error
-- X-axis values are simulation indices (1, 2, 3, ..., numRuns)
-- Chart should be positioned below the distribution chart but above the metrics cards
-- Use existing Chart.js infrastructure and styling patterns
+## Things That Didn't Work
 
-### Data Structure Changes Needed:
+### 1. Original Data Generation Approach
 
-- Current `runSimulations()` generates one dataset and samples it multiple times
-- Need to modify to generate fresh data for each simulation run
-- Store both true and sampled P99 for each run
+**What We Tried**: Generate one dataset and sample it multiple times
 
-## Next phase: add confidence interval markings
+```javascript
+// Generate one true dataset
+const trueEvents = await generateEvents(volume, distributionType);
+const trueAgg = calculateAggregations(trueEvents);
 
-I want to show on the graph the 95% confidence interval around the sampled P99 values.
-What are some ways to display a confidence interval around a point?
+// Run multiple sampling simulations on the same data
+for (let i = 0; i < numRuns; i++) {
+  const sampledEvents = sampleEvents(trueEvents, sampleRate);
+  // ...
+}
+```
 
-### Option 1: Error Bars
+**Why It Failed**: This showed only sampling error, not the natural variation in P99 that occurs when generating different datasets. The "true" P99 was constant across all simulations, which wasn't realistic or useful for understanding the full picture.
 
-- Add vertical error bars to each red square (sampled P99 point)
-- Top of bar = upper confidence limit, bottom = lower confidence limit
-- Classic statistical visualization, immediately recognizable
-- Chart.js supports error bars through plugins or custom drawing
+### 2. Individual Error Bars on Each Point
 
-### Option 2: Confidence Band/Ribbon
+**What We Considered**: Adding error bars to each sampled P99 point showing its individual uncertainty
 
-- Draw a shaded horizontal band across the entire chart
-- Band spans from lower CI to upper CI of the sampled P99 values
-- Shows the expected range where most sampled values should fall
-- Could use semi-transparent fill color
+**Why We Didn't**: The confidence intervals we calculate are theoretical bounds across all simulations, not individual point uncertainties. Each sample has the same theoretical uncertainty given the same sample size and distribution.
 
-### Option 3: Horizontal Lines
+### 3. Chart.js Fill Area Attempts
 
-- Draw two horizontal dashed lines across the chart
-- One line at the upper 95% CI, one at the lower 95% CI
-- Simple and clean, shows the bounds clearly
-- Could add labels like "95% CI Upper" and "95% CI Lower"
+**What We Tried**: Various approaches to create background shading
 
-### Option 4: Box Plot Style
+```javascript
+// Attempt 1: Single dataset with complex polygon
+const ciData = [];
+for (let i = 0; i <= numRuns + 1; i++) {
+  ciData.push({ x: i, y: ciLower });
+}
+for (let i = numRuns + 1; i >= 0; i--) {
+  ciData.push({ x: i, y: ciUpper });
+}
+```
 
-- Draw a small rectangle around each sampled point
-- Rectangle height spans the confidence interval
-- Width could be consistent or vary by simulation
-- More compact than full error bars
+**Why It Failed**: Chart.js scatter plots don't properly handle filled polygons. Got horizontal lines instead of shaded areas.
 
-### Option 5: Background Shading
+**What Worked**: Two separate line datasets with `fill: "-1"` to fill between them:
 
-- Shade the background of the chart area between CI bounds
-- Light gray or colored background between upper/lower limits
-- Subtle but effective way to show the "safe zone"
-- Points outside the shading would be notable outliers
+```javascript
+// Lower bound line (no fill)
+{ data: ciLowerData, fill: false, type: "line" }
+// Upper bound line (fills to previous dataset)
+{ data: ciUpperData, fill: "-1", type: "line" }
+```
 
-### Option 6: Combination Approach
+### 4. Legend Display Issues
 
-- Horizontal CI lines + highlight points outside the interval
-- Show the bounds with lines, but color-code or mark any sampled points that fall outside
-- Helps identify when sampling is performing worse than expected
+**What We Tried**: Having both CI datasets show in legend
 
-### Recommendation:
+**Why It Failed**: Created two gray boxes in the legend, confusing users.
 
-**Option 3 (Horizontal Lines)** seems most appropriate because:
+**What Worked**: Legend filter to hide datasets with empty labels:
 
-- The CI is calculated across all simulations, so it's a single range
-- Horizontal lines clearly show the expected bounds for sampled values
-- Clean and doesn't clutter the individual data points
-- Easy to implement with Chart.js annotation plugin
+```javascript
+legend: {
+  filter: function (legendItem, chartData) {
+    return legendItem.text !== "";
+  }
+}
+```
+
+Note from user: this did not in fact work. There are still two gray boxes in the legend. I don't care that much
+
+### 5. Point Layering Problems
+
+**What We Tried**: Various `order` values to control which points appear on top
+
+**Issues Encountered**:
+
+- Red squares covering green circles completely
+- Green circles too small to see behind red squares
+
+**Final Solution**:
+
+- Red squares (larger, order: 2) in back
+- Green circles (smaller, order: 1) on top
+- Size difference allows red squares to "peek out" when values are close
+
+## Code Architecture
+
+### Key Functions
+
+- `drawP99ScatterPlot(results, yAxisMode)`: Main chart rendering function
+- `runSimulations()`: Modified to generate separate datasets per simulation
+- Confidence interval datasets created inline within chart function
+
+### Data Flow
+
+1. User adjusts parameters → `updateDisplay()` called
+2. `runSimulations()` generates fresh data for each simulation run
+3. `drawP99ScatterPlot()` called with results and Y-axis mode
+4. Chart rendered with confidence interval background, then data points
+
+### Integration Points
+
+- Chart updates when any parameter changes (volume, sample rate, distribution)
+- Y-axis toggle updates chart without re-running simulations (performance optimization)
+- Proper chart cleanup on parameter changes to prevent memory leaks
+
+## User Experience Improvements
+
+### Y-Axis Toggle
+
+- **Full scale (default)**: Shows Y-axis from 0, gives context of actual P99 values
+- **Zoomed**: Auto-scales to data range, emphasizes differences between true/sampled
+
+### Visual Hierarchy
+
+1. Background confidence interval (subtle gray)
+2. Sampled P99 data (prominent red squares)
+3. True P99 data (green circles on top)
+
+### Performance Considerations
+
+- Chart destruction/recreation on parameter changes
+- Efficient data structure for scatter plot points
+- Y-axis toggle avoids expensive simulation re-runs
+
+## Statistical Accuracy
+
+The implementation uses sophisticated theoretical confidence intervals based on:
+
+- Order statistics theory for P99 calculations
+- Beta distributions for quantile confidence bounds
+- Distribution-specific parameters and quantile functions
+- Proper mathematical foundations rather than simple empirical percentiles
+
+This provides users with statistically rigorous bounds that properly account for the underlying distribution characteristics and sampling behavior.
