@@ -274,6 +274,19 @@ const metricConfigs = {
     sampledColor: "#dc3545",
     canvasId: "countScatterChart",
     chartVariable: "countScatterChart",
+    trueLabel: "True COUNT",
+    sampledLabel: "Sampled COUNT",
+    truePointStyle: "circle",
+    sampledPointStyle: "rect",
+    truePointRadius: 4,
+    sampledPointRadius: 5,
+    trueOrder: 1,
+    sampledOrder: 2,
+    formatValue: (value) => {
+      if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+      return value.toFixed(0);
+    },
   },
   sum: {
     title: "SUM For Each Simulation, Before and After Sampling",
@@ -282,6 +295,19 @@ const metricConfigs = {
     sampledColor: "#dc3545",
     canvasId: "sumScatterChart",
     chartVariable: "sumScatterChart",
+    trueLabel: "True SUM",
+    sampledLabel: "Sampled SUM",
+    truePointStyle: "circle",
+    sampledPointStyle: "rect",
+    truePointRadius: 4,
+    sampledPointRadius: 5,
+    trueOrder: 1,
+    sampledOrder: 2,
+    formatValue: (value) => {
+      if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+      return value.toFixed(0);
+    },
   },
   average: {
     title: "AVERAGE For Each Simulation, Before and After Sampling",
@@ -290,6 +316,15 @@ const metricConfigs = {
     sampledColor: "#dc3545",
     canvasId: "averageScatterChart",
     chartVariable: "averageScatterChart",
+    trueLabel: "True AVERAGE",
+    sampledLabel: "Sampled AVERAGE",
+    truePointStyle: "circle",
+    sampledPointStyle: "rect",
+    truePointRadius: 4,
+    sampledPointRadius: 5,
+    trueOrder: 1,
+    sampledOrder: 2,
+    formatValue: (value) => value.toFixed(2),
   },
   p99: {
     title: "P99 For Each Simulation, Before and After Sampling",
@@ -298,6 +333,15 @@ const metricConfigs = {
     sampledColor: "#dc3545",
     canvasId: "p99ScatterChart",
     chartVariable: "p99ScatterChart",
+    trueLabel: "True P99",
+    sampledLabel: "Sampled P99",
+    truePointStyle: "circle",
+    sampledPointStyle: "rect",
+    truePointRadius: 4,
+    sampledPointRadius: 5,
+    trueOrder: 1,
+    sampledOrder: 2,
+    formatValue: (value) => value.toFixed(2),
   },
 };
 
@@ -397,23 +441,24 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
           hidden: false, // Keep visible but hide from legend
         },
         {
-          label: `Sampled ${metricType.toUpperCase()}`,
+          label: config.sampledLabel,
           data: sampledData,
           backgroundColor: config.sampledColor,
           borderColor: config.sampledColor,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          pointStyle: "rect",
-          order: 2,
+          pointRadius: config.sampledPointRadius,
+          pointHoverRadius: config.sampledPointRadius + 2,
+          pointStyle: config.sampledPointStyle,
+          order: config.sampledOrder,
         },
         {
-          label: `True ${metricType.toUpperCase()}`,
+          label: config.trueLabel,
           data: trueData,
           backgroundColor: config.trueColor,
           borderColor: config.trueColor,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          order: 1,
+          pointRadius: config.truePointRadius,
+          pointHoverRadius: config.truePointRadius + 2,
+          pointStyle: config.truePointStyle,
+          order: config.trueOrder,
         },
       ],
     },
@@ -436,6 +481,15 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
           filter: function (legendItem) {
             // Hide datasets with empty labels (the upper CI bound)
             return legendItem.text !== "";
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.dataset.label || "";
+              const value = config.formatValue(context.parsed.y);
+              return `${label}: ${value}`;
+            },
           },
         },
       },
@@ -461,6 +515,11 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
             color: "rgba(0, 0, 0, 0.1)",
           },
           beginAtZero: yAxisMode === "full",
+          ticks: {
+            callback: function (value) {
+              return config.formatValue(value);
+            },
+          },
         },
       },
       interaction: {
