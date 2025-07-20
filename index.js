@@ -335,15 +335,6 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
           hidden: false, // Keep visible but hide from legend
         },
         {
-          label: "True P99",
-          data: trueP99Data,
-          backgroundColor: "#28a745",
-          borderColor: "#28a745",
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          order: 2,
-        },
-        {
           label: "Sampled P99",
           data: sampledP99Data,
           backgroundColor: "#dc3545",
@@ -351,6 +342,15 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
           pointRadius: 5,
           pointHoverRadius: 7,
           pointStyle: "rect",
+          order: 2,
+        },
+        {
+          label: "True P99",
+          data: trueP99Data,
+          backgroundColor: "#28a745",
+          borderColor: "#28a745",
+          pointRadius: 4,
+          pointHoverRadius: 6,
           order: 1,
         },
       ],
