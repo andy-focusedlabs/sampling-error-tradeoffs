@@ -263,7 +263,7 @@ function updateDistributionChart(distributionType) {
 }
 
 // Create or update the P99 scatter plot
-function drawP99ScatterPlot(results) {
+function drawP99ScatterPlot(results, yAxisMode = "zoomed") {
   const ctx = document.getElementById("p99ScatterChart").getContext("2d");
 
   // Destroy existing chart if it exists
@@ -348,7 +348,7 @@ function drawP99ScatterPlot(results) {
           grid: {
             color: "rgba(0, 0, 0, 0.1)",
           },
-          beginAtZero: false,
+          beginAtZero: yAxisMode === "full",
         },
       },
       interaction: {
@@ -557,7 +557,8 @@ async function updateDisplay() {
     const results = await runSimulations(volume, sampleRate, distributionType, numRuns);
 
     // Draw P99 scatter plot
-    drawP99ScatterPlot(results);
+    const yAxisMode = document.getElementById("p99YAxisToggle").value;
+    drawP99ScatterPlot(results, yAxisMode);
 
     // Update statistics summary
     document.getElementById("totalEvents").textContent = volume.toLocaleString();
@@ -623,6 +624,13 @@ function scheduleUpdate() {
 document.getElementById("volume").addEventListener("input", scheduleUpdate);
 document.getElementById("sampleRate").addEventListener("input", scheduleUpdate);
 document.getElementById("distribution").addEventListener("change", scheduleUpdate);
+document.getElementById("p99YAxisToggle").addEventListener("change", () => {
+  // Only redraw the scatter plot, don't re-run simulations
+  if (latestResults) {
+    const yAxisMode = document.getElementById("p99YAxisToggle").value;
+    drawP99ScatterPlot(latestResults, yAxisMode);
+  }
+});
 
 // Initial update
 updateDisplay();

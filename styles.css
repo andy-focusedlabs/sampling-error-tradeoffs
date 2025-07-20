@@ -194,6 +194,33 @@ select {
   font-size: 18px;
 }
 
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-controls label {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.chart-controls select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+}
+
 .chart-container {
   position: relative;
   height: 300px;
