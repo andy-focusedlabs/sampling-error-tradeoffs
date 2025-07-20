@@ -1,14 +1,6 @@
 // Global variable to store latest results
 let latestResults = null;
 
-// Update plot when metric selection changes
-function updatePlotMetric() {
-  if (latestResults) {
-    const selectedMetric = document.getElementById("plotMetric").value;
-    drawSimulationPlot(latestResults.simulationResults, latestResults.true, selectedMetric);
-  }
-}
-
 let updateTimer = null;
 let isUpdating = false;
 
@@ -158,159 +150,6 @@ async function runSimulations(volume, sampleRate, distributionType, numRuns = 50
   };
 }
 
-// Draw simulation results plot
-function drawSimulationPlot(simulationResults, trueValues, selectedMetric = "count") {
-  const canvas = document.getElementById("simulationPlot");
-  const ctx = canvas.getContext("2d");
-
-  // Set canvas size
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-
-  const width = canvas.width;
-  const height = canvas.height;
-  const margin = { top: 20, right: 20, bottom: 40, left: 80 };
-  const plotWidth = width - margin.left - margin.right;
-  const plotHeight = height - margin.top - margin.bottom;
-
-  // Clear canvas
-  ctx.clearRect(0, 0, width, height);
-
-  const results = simulationResults[selectedMetric];
-  const trueValue = trueValues[selectedMetric];
-  const ci = calculateConfidenceIntervals(results);
-
-  if (results.length === 0) return;
-
-  // Calculate scales
-  const minValue = Math.min(trueValue, ci.lower, ...results);
-  const maxValue = Math.max(trueValue, ci.upper, ...results);
-  const valueRange = maxValue - minValue;
-  const padding = valueRange * 0.1;
-
-  const yMin = minValue - padding;
-  const yMax = maxValue + padding;
-
-  // Scale functions
-  const xScale = (runNumber) => margin.left + (runNumber / (results.length - 1)) * plotWidth;
-  const yScale = (value) => margin.top + plotHeight - ((value - yMin) / (yMax - yMin)) * plotHeight;
-
-  // Draw axes
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  // Y-axis
-  ctx.moveTo(margin.left, margin.top);
-  ctx.lineTo(margin.left, margin.top + plotHeight);
-  // X-axis
-  ctx.moveTo(margin.left, margin.top + plotHeight);
-  ctx.lineTo(margin.left + plotWidth, margin.top + plotHeight);
-  ctx.stroke();
-
-  // Draw confidence interval band
-  ctx.fillStyle = "rgba(220, 53, 69, 0.1)";
-  ctx.beginPath();
-  ctx.moveTo(margin.left, yScale(ci.lower));
-  ctx.lineTo(margin.left + plotWidth, yScale(ci.lower));
-  ctx.lineTo(margin.left + plotWidth, yScale(ci.upper));
-  ctx.lineTo(margin.left, yScale(ci.upper));
-  ctx.closePath();
-  ctx.fill();
-
-  // Draw confidence interval lines
-  ctx.strokeStyle = "rgba(220, 53, 69, 0.5)";
-  ctx.lineWidth = 1;
-  ctx.setLineDash([5, 5]);
-  ctx.beginPath();
-  ctx.moveTo(margin.left, yScale(ci.lower));
-  ctx.lineTo(margin.left + plotWidth, yScale(ci.lower));
-  ctx.moveTo(margin.left, yScale(ci.upper));
-  ctx.lineTo(margin.left + plotWidth, yScale(ci.upper));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Draw true value line
-  ctx.strokeStyle = "#28a745";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(margin.left, yScale(trueValue));
-  ctx.lineTo(margin.left + plotWidth, yScale(trueValue));
-  ctx.stroke();
-
-  // Draw simulation points
-  ctx.fillStyle = "#dc3545";
-  results.forEach((value, i) => {
-    const x = xScale(i);
-    const y = yScale(value);
-
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, 2 * Math.PI);
-    ctx.fill();
-  });
-
-  // Draw sample mean line
-  ctx.strokeStyle = "#007acc";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([10, 5]);
-  ctx.beginPath();
-  ctx.moveTo(margin.left, yScale(ci.mean));
-  ctx.lineTo(margin.left + plotWidth, yScale(ci.mean));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Add labels
-  ctx.fillStyle = "#333";
-  ctx.font = "12px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText("Simulation Run Number", margin.left + plotWidth / 2, height - 10);
-
-  ctx.save();
-  ctx.translate(15, margin.top + plotHeight / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.textAlign = "center";
-  ctx.fillText(`${selectedMetric.toUpperCase()} Value`, 0, 0);
-  ctx.restore();
-
-  // Add legend
-  const legendY = margin.top + 10;
-  ctx.textAlign = "left";
-  ctx.font = "11px Arial";
-
-  // True value
-  ctx.strokeStyle = "#28a745";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(margin.left + 10, legendY);
-  ctx.lineTo(margin.left + 30, legendY);
-  ctx.stroke();
-  ctx.fillStyle = "#28a745";
-  ctx.fillText("True Value", margin.left + 35, legendY + 4);
-
-  // Sample mean
-  ctx.strokeStyle = "#007acc";
-  ctx.setLineDash([10, 5]);
-  ctx.beginPath();
-  ctx.moveTo(margin.left + 120, legendY);
-  ctx.lineTo(margin.left + 140, legendY);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = "#007acc";
-  ctx.fillText("Sample Mean", margin.left + 145, legendY + 4);
-
-  // CI band
-  ctx.fillStyle = "rgba(220, 53, 69, 0.3)";
-  ctx.fillRect(margin.left + 240, legendY - 3, 20, 6);
-  ctx.fillStyle = "#dc3545";
-  ctx.fillText("95% CI", margin.left + 265, legendY + 4);
-
-  // Sample points
-  ctx.fillStyle = "#dc3545";
-  ctx.beginPath();
-  ctx.arc(margin.left + 350, legendY, 3, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.fillText("Samples", margin.left + 360, legendY + 4);
-}
-
 // Format number for display
 function formatNumber(num, decimals = 2) {
   if (num > 1000000) {
@@ -388,12 +227,8 @@ async function updateDisplay() {
     document.getElementById("p99Error").textContent = `${(((results.sampled.p99.mean - results.true.p99) / results.true.p99) * 100).toFixed(1)}%`;
     document.getElementById("p99CI").textContent = `95% CI: [${formatNumber(results.sampled.p99.lower)}, ${formatNumber(results.sampled.p99.upper)}]`;
 
-    // Store results for plot metric switching
+    // Store results for future reference
     latestResults = results;
-
-    // Draw simulation plot
-    const selectedMetric = document.getElementById("plotMetric").value;
-    drawSimulationPlot(results.simulationResults, results.true, selectedMetric);
 
     document.getElementById("runsDisplay").textContent = `Completed ${numRuns} simulations`;
   } catch (error) {
@@ -429,7 +264,6 @@ function scheduleUpdate() {
 document.getElementById("volume").addEventListener("input", scheduleUpdate);
 document.getElementById("sampleRate").addEventListener("input", scheduleUpdate);
 document.getElementById("distribution").addEventListener("change", scheduleUpdate);
-document.getElementById("plotMetric").addEventListener("change", updatePlotMetric);
 
 // Initial update
 updateDisplay();
