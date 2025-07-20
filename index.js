@@ -1161,7 +1161,6 @@ async function updateDisplay() {
     updateExplanation(volume, sampleRate, numRuns);
 
     // Show current run count
-    document.getElementById("simulationRuns").textContent = numRuns.toString();
     document.getElementById("runsDisplay").textContent = `Running ${numRuns} simulations...`;
 
     // Allow UI to update
@@ -1180,33 +1179,6 @@ async function updateDisplay() {
     drawMetricScatterPlot("sum", results, sumYAxisMode);
     drawMetricScatterPlot("average", results, averageYAxisMode);
     drawMetricScatterPlot("p99", results, p99YAxisMode);
-
-    // Update statistics summary
-    document.getElementById("totalEvents").textContent = volume.toLocaleString();
-    document.getElementById("sampledEvents").textContent = Math.ceil(volume / sampleRate).toLocaleString();
-    document.getElementById("samplingRatio").textContent = `${(100 / sampleRate).toFixed(1)}%`;
-    document.getElementById("theoreticalError").textContent = `±${(100 / Math.sqrt(volume / sampleRate)).toFixed(2)}%`;
-
-    // Update metric displays
-    document.getElementById("trueCount").textContent = formatNumber(results.true.count);
-    document.getElementById("sampledCount").textContent = formatNumber(results.sampled.count.mean);
-    document.getElementById("countError").textContent = `${(((results.sampled.count.mean - results.true.count) / results.true.count) * 100).toFixed(1)}%`;
-    document.getElementById("countCI").textContent = `95% CI: [${formatNumber(results.sampled.count.lower)}, ${formatNumber(results.sampled.count.upper)}]`;
-
-    document.getElementById("trueSum").textContent = formatNumber(results.true.sum);
-    document.getElementById("sampledSum").textContent = formatNumber(results.sampled.sum.mean);
-    document.getElementById("sumError").textContent = `${(((results.sampled.sum.mean - results.true.sum) / results.true.sum) * 100).toFixed(1)}%`;
-    document.getElementById("sumCI").textContent = `95% CI: [${formatNumber(results.sampled.sum.lower)}, ${formatNumber(results.sampled.sum.upper)}]`;
-
-    document.getElementById("trueAvg").textContent = formatNumber(results.true.average);
-    document.getElementById("sampledAvg").textContent = formatNumber(results.sampled.average.mean);
-    document.getElementById("avgError").textContent = `${(((results.sampled.average.mean - results.true.average) / results.true.average) * 100).toFixed(1)}%`;
-    document.getElementById("avgCI").textContent = `95% CI: [${formatNumber(results.sampled.average.lower)}, ${formatNumber(results.sampled.average.upper)}]`;
-
-    document.getElementById("trueP99").textContent = formatNumber(results.true.p99);
-    document.getElementById("sampledP99").textContent = formatNumber(results.sampled.p99.mean);
-    document.getElementById("p99Error").textContent = `${(((results.sampled.p99.mean - results.true.p99) / results.true.p99) * 100).toFixed(1)}%`;
-    document.getElementById("p99CI").textContent = `95% CI: [${formatNumber(results.sampled.p99.lower)}, ${formatNumber(results.sampled.p99.upper)}]`;
 
     // Store results for future reference
     latestResults = results;
