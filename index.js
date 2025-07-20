@@ -945,6 +945,22 @@ function updateExplanation(volume, sampleRate, numRuns) {
   const explanationDiv = document.querySelector(".explanation");
   const sampledEvents = Math.ceil(volume / sampleRate);
 
+  // Calculate trapezoid dimensions based on sample rate
+  // Bottom width = top width / sample rate
+  // We'll use percentages to create the trapezoid effect
+  const reductionRatio = 1 / sampleRate;
+  const bottomWidthPercent = reductionRatio * 100;
+
+  // Calculate the x-coordinates for the bottom of the trapezoid
+  // Center the narrower bottom part
+  const sideMargin = (100 - bottomWidthPercent) / 2;
+  const bottomLeftX = sideMargin + "%";
+  const bottomRightX = 100 - sideMargin + "%";
+
+  // Set CSS custom properties for the trapezoid shape
+  explanationDiv.style.setProperty("--bottom-left-x", bottomLeftX);
+  explanationDiv.style.setProperty("--bottom-right-x", bottomRightX);
+
   explanationDiv.innerHTML = `
     <p>${volume.toLocaleString()} events go in</p>
     <p>to ${numRuns} simulations</p>
