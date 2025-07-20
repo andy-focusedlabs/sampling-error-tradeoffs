@@ -1170,9 +1170,16 @@ async function updateDisplay() {
     // Run simulations
     const results = await runSimulations(volume, sampleRate, distributionType, numRuns);
 
-    // Draw P99 scatter plot
-    const yAxisMode = document.getElementById("p99YAxisToggle").value;
-    drawP99ScatterPlot(results, yAxisMode);
+    // Draw all scatter plots
+    const p99YAxisMode = document.getElementById("p99YAxisToggle").value;
+    const countYAxisMode = document.getElementById("countYAxisToggle").value;
+    const sumYAxisMode = document.getElementById("sumYAxisToggle").value;
+    const averageYAxisMode = document.getElementById("averageYAxisToggle").value;
+
+    drawMetricScatterPlot("count", results, countYAxisMode);
+    drawMetricScatterPlot("sum", results, sumYAxisMode);
+    drawMetricScatterPlot("average", results, averageYAxisMode);
+    drawMetricScatterPlot("p99", results, p99YAxisMode);
 
     // Update statistics summary
     document.getElementById("totalEvents").textContent = volume.toLocaleString();
@@ -1238,11 +1245,32 @@ function scheduleUpdate() {
 document.getElementById("volume").addEventListener("input", scheduleUpdate);
 document.getElementById("sampleRate").addEventListener("input", scheduleUpdate);
 document.getElementById("distribution").addEventListener("change", scheduleUpdate);
+// Y-axis toggle event listeners - only redraw charts, don't re-run simulations
+document.getElementById("countYAxisToggle").addEventListener("change", () => {
+  if (latestResults) {
+    const yAxisMode = document.getElementById("countYAxisToggle").value;
+    drawMetricScatterPlot("count", latestResults, yAxisMode);
+  }
+});
+
+document.getElementById("sumYAxisToggle").addEventListener("change", () => {
+  if (latestResults) {
+    const yAxisMode = document.getElementById("sumYAxisToggle").value;
+    drawMetricScatterPlot("sum", latestResults, yAxisMode);
+  }
+});
+
+document.getElementById("averageYAxisToggle").addEventListener("change", () => {
+  if (latestResults) {
+    const yAxisMode = document.getElementById("averageYAxisToggle").value;
+    drawMetricScatterPlot("average", latestResults, yAxisMode);
+  }
+});
+
 document.getElementById("p99YAxisToggle").addEventListener("change", () => {
-  // Only redraw the scatter plot, don't re-run simulations
   if (latestResults) {
     const yAxisMode = document.getElementById("p99YAxisToggle").value;
-    drawP99ScatterPlot(latestResults, yAxisMode);
+    drawMetricScatterPlot("p99", latestResults, yAxisMode);
   }
 });
 
