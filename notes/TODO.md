@@ -19,8 +19,10 @@
 - add a power law distribution
 - make it sample randomly instead of every N. With every N, COUNT is always perfectly accurate.
 - make it use the other method to calculate P99, the one Retriever probably uses
+- make it use 90% CI
 
 ## Not for PoC:
 
 - make a real project structure, with code in modules
 - make it use streaming instead of holding all events in memory
+- make CI level a slider?

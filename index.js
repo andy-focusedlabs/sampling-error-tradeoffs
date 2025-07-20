@@ -287,10 +287,38 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
     });
   }
 
+  // Add confidence interval background shading
+  const ciData = [];
+  if (results.sampled && results.sampled.p99) {
+    const ciLower = results.sampled.p99.lower;
+    const ciUpper = results.sampled.p99.upper;
+
+    // Create a filled area dataset for the confidence interval
+    for (let i = 0; i <= numRuns + 1; i++) {
+      ciData.push({ x: i, y: ciLower });
+    }
+    for (let i = numRuns + 1; i >= 0; i--) {
+      ciData.push({ x: i, y: ciUpper });
+    }
+  }
+
   p99ScatterChart = new Chart(ctx, {
     type: "scatter",
     data: {
       datasets: [
+        {
+          label: "95% Confidence Interval",
+          data: ciData,
+          backgroundColor: "rgba(128, 128, 128, 0.2)",
+          borderColor: "rgba(128, 128, 128, 0.3)",
+          borderWidth: 1,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          showLine: true,
+          tension: 0,
+          order: 3, // Draw behind other datasets
+        },
         {
           label: "True P99",
           data: trueP99Data,
@@ -298,6 +326,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
           borderColor: "#28a745",
           pointRadius: 4,
           pointHoverRadius: 6,
+          order: 2,
         },
         {
           label: "Sampled P99",
@@ -307,6 +336,7 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
           pointRadius: 5,
           pointHoverRadius: 7,
           pointStyle: "rect",
+          order: 1,
         },
       ],
     },

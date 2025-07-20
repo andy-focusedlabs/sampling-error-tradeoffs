@@ -77,11 +77,57 @@ and sampled P99 (from sampled data)
 - Need to modify to generate fresh data for each simulation run
 - Store both true and sampled P99 for each run
 
-
 ## Next phase: add confidence interval markings
 
 I want to show on the graph the 95% confidence interval around the sampled P99 values.
 What are some ways to display a confidence interval around a point?
 
-(put some options here)
+### Option 1: Error Bars
 
+- Add vertical error bars to each red square (sampled P99 point)
+- Top of bar = upper confidence limit, bottom = lower confidence limit
+- Classic statistical visualization, immediately recognizable
+- Chart.js supports error bars through plugins or custom drawing
+
+### Option 2: Confidence Band/Ribbon
+
+- Draw a shaded horizontal band across the entire chart
+- Band spans from lower CI to upper CI of the sampled P99 values
+- Shows the expected range where most sampled values should fall
+- Could use semi-transparent fill color
+
+### Option 3: Horizontal Lines
+
+- Draw two horizontal dashed lines across the chart
+- One line at the upper 95% CI, one at the lower 95% CI
+- Simple and clean, shows the bounds clearly
+- Could add labels like "95% CI Upper" and "95% CI Lower"
+
+### Option 4: Box Plot Style
+
+- Draw a small rectangle around each sampled point
+- Rectangle height spans the confidence interval
+- Width could be consistent or vary by simulation
+- More compact than full error bars
+
+### Option 5: Background Shading
+
+- Shade the background of the chart area between CI bounds
+- Light gray or colored background between upper/lower limits
+- Subtle but effective way to show the "safe zone"
+- Points outside the shading would be notable outliers
+
+### Option 6: Combination Approach
+
+- Horizontal CI lines + highlight points outside the interval
+- Show the bounds with lines, but color-code or mark any sampled points that fall outside
+- Helps identify when sampling is performing worse than expected
+
+### Recommendation:
+
+**Option 3 (Horizontal Lines)** seems most appropriate because:
+
+- The CI is calculated across all simulations, so it's a single range
+- Horizontal lines clearly show the expected bounds for sampled values
+- Clean and doesn't clutter the individual data points
+- Easy to implement with Chart.js annotation plugin
