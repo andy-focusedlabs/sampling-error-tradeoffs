@@ -56,8 +56,9 @@ let latestResults = null;
 let updateTimer = null;
 let isUpdating = false;
 
-// Chart instance
+// Chart instances
 let distributionChart = null;
+let p99ScatterChart = null;
 
 // Distribution generators
 const distributions = {
@@ -261,6 +262,103 @@ function updateDistributionChart(distributionType) {
   });
 }
 
+// Create or update the P99 scatter plot
+function drawP99ScatterPlot(results) {
+  const ctx = document.getElementById("p99ScatterChart").getContext("2d");
+
+  // Destroy existing chart if it exists
+  if (p99ScatterChart) {
+    p99ScatterChart.destroy();
+  }
+
+  // Prepare data for scatter plot
+  const numRuns = results.scatterPlotData.trueP99.length;
+  const trueP99Data = [];
+  const sampledP99Data = [];
+
+  for (let i = 0; i < numRuns; i++) {
+    trueP99Data.push({
+      x: i + 1, // Simulation number (1-based)
+      y: results.scatterPlotData.trueP99[i],
+    });
+    sampledP99Data.push({
+      x: i + 1, // Simulation number (1-based)
+      y: results.scatterPlotData.sampledP99[i],
+    });
+  }
+
+  p99ScatterChart = new Chart(ctx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label: "True P99",
+          data: trueP99Data,
+          backgroundColor: "#28a745",
+          borderColor: "#28a745",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+        {
+          label: "Sampled P99",
+          data: sampledP99Data,
+          backgroundColor: "#dc3545",
+          borderColor: "#dc3545",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      aspectRatio: 2,
+      plugins: {
+        title: {
+          display: true,
+          text: "P99 For Each Simulation, Before and After Sampling",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
+        legend: {
+          display: true,
+          position: "top",
+        },
+      },
+      scales: {
+        x: {
+          type: "linear",
+          title: {
+            display: true,
+            text: "Simulation Number",
+          },
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+          min: 0.5,
+          max: numRuns + 0.5,
+        },
+        y: {
+          title: {
+            display: true,
+            text: "P99 Value",
+          },
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+          beginAtZero: false,
+        },
+      },
+      interaction: {
+        intersect: false,
+        mode: "point",
+      },
+    },
+  });
+}
+
 // Generate synthetic event data
 // we should be able to use a streaming model instead, retaining only as much as we need to calculate the aggregations.
 // For a perfect p99 though, we might need all of it? ... or all of it in the top 5% of expected values.
@@ -352,16 +450,31 @@ async function runSimulations(volume, sampleRate, distributionType, numRuns = 50
     p99: [],
   };
 
-  // Generate one true dataset
+  // Store individual simulation data for scatter plot
+  const scatterPlotData = {
+    trueP99: [],
+    sampledP99: [],
+  };
+
+  // Generate one true dataset for overall metrics
   const trueEvents = await generateEvents(volume, distributionType);
   const trueAgg = calculateAggregations(trueEvents);
 
-  // Run multiple sampling simulations
+  // Run multiple simulations with separate datasets for each
   for (let i = 0; i < numRuns; i++) {
-    const sampledEvents = sampleEvents(trueEvents, sampleRate);
+    // Generate fresh data for this simulation
+    const simulationEvents = await generateEvents(volume, distributionType);
+    const simulationTrueAgg = calculateAggregations(simulationEvents);
+
+    // Sample the simulation data
+    const sampledEvents = sampleEvents(simulationEvents, sampleRate);
     const sampledAgg = calculateAggregations(sampledEvents);
 
-    // Scale up count and sum
+    // Store data for scatter plot
+    scatterPlotData.trueP99.push(simulationTrueAgg.p99);
+    scatterPlotData.sampledP99.push(sampledAgg.p99);
+
+    // Scale up count and sum for confidence intervals
     results.count.push(sampledAgg.count * sampleRate);
     results.sum.push(sampledAgg.sum * sampleRate);
     results.average.push(sampledAgg.average);
@@ -382,6 +495,7 @@ async function runSimulations(volume, sampleRate, distributionType, numRuns = 50
       p99: calculateConfidenceIntervals(results.p99),
     },
     simulationResults: results,
+    scatterPlotData: scatterPlotData,
     rawData: {
       trueEvents: trueEvents,
       sampleEvents: sampleEvents(trueEvents, sampleRate),
@@ -441,6 +555,9 @@ async function updateDisplay() {
 
     // Run simulations
     const results = await runSimulations(volume, sampleRate, distributionType, numRuns);
+
+    // Draw P99 scatter plot
+    drawP99ScatterPlot(results);
 
     // Update statistics summary
     document.getElementById("totalEvents").textContent = volume.toLocaleString();

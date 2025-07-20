@@ -179,6 +179,21 @@ select {
   font-size: 18px;
 }
 
+.p99-scatter-chart {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.p99-scatter-chart h3 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
 .chart-container {
   position: relative;
   height: 300px;
