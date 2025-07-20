@@ -311,7 +311,21 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
   const ctx = document.getElementById(config.canvasId).getContext("2d");
 
   // Destroy existing chart if it exists
-  const chartVariable = window[config.chartVariable];
+  let chartVariable;
+  switch (config.chartVariable) {
+    case "countScatterChart":
+      chartVariable = countScatterChart;
+      break;
+    case "sumScatterChart":
+      chartVariable = sumScatterChart;
+      break;
+    case "averageScatterChart":
+      chartVariable = averageScatterChart;
+      break;
+    case "p99ScatterChart":
+      chartVariable = p99ScatterChart;
+      break;
+  }
   if (chartVariable) {
     chartVariable.destroy();
   }
@@ -457,7 +471,20 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
   });
 
   // Store chart in global variable
-  window[config.chartVariable] = chart;
+  switch (config.chartVariable) {
+    case "countScatterChart":
+      countScatterChart = chart;
+      break;
+    case "sumScatterChart":
+      sumScatterChart = chart;
+      break;
+    case "averageScatterChart":
+      averageScatterChart = chart;
+      break;
+    case "p99ScatterChart":
+      p99ScatterChart = chart;
+      break;
+  }
 }
 
 // Create or update the P99 scatter plot (refactored to use generic function)
