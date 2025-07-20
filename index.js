@@ -1,3 +1,55 @@
+// Custom plugin to draw vertical lines for average and P99
+const verticalLinePlugin = {
+  id: "verticalLines",
+  afterDraw: (chart) => {
+    if (chart.config.options.plugins.verticalLines) {
+      const { ctx, chartArea, scales } = chart;
+      const { average, p99 } = chart.config.options.plugins.verticalLines;
+
+      ctx.save();
+
+      // Draw average line
+      if (average !== undefined) {
+        const x = scales.x.getPixelForValue(average);
+        ctx.strokeStyle = "#28a745";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+
+        // Draw average label
+        ctx.fillStyle = "#28a745";
+        ctx.font = "11px Arial";
+        ctx.fillText(`Avg: ${average.toFixed(1)}`, x + 5, chartArea.top + 15);
+      }
+
+      // Draw P99 line
+      if (p99 !== undefined) {
+        const x = scales.x.getPixelForValue(p99);
+        ctx.strokeStyle = "#dc3545";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+
+        // Draw P99 label
+        ctx.fillStyle = "#dc3545";
+        ctx.font = "11px Arial";
+        ctx.fillText(`P99: ${p99.toFixed(1)}`, x + 5, chartArea.top + 30);
+      }
+
+      ctx.restore();
+    }
+  },
+};
+
+// Register the custom plugin
+Chart.register(verticalLinePlugin);
+
 // Global variable to store latest results
 let latestResults = null;
 
@@ -100,10 +152,33 @@ function generateTheoreticalData(distributionType, numPoints = 200) {
   return data;
 }
 
+// Calculate theoretical average and P99 for a distribution
+function calculateTheoreticalStats(distributionType, numSamples = 100000) {
+  const generator = distributions[distributionType];
+  const samples = [];
+
+  for (let i = 0; i < numSamples; i++) {
+    samples.push(Math.max(0, generator()));
+  }
+
+  const sum = samples.reduce((a, b) => a + b, 0);
+  const average = sum / samples.length;
+
+  // Calculate P99
+  const sorted = samples.slice().sort((a, b) => a - b);
+  const p99Index = Math.ceil(0.99 * sorted.length) - 1;
+  const p99 = sorted[Math.max(0, Math.min(p99Index, sorted.length - 1))];
+
+  return { average, p99 };
+}
+
 // Create or update the distribution chart
 function updateDistributionChart(distributionType) {
   const ctx = document.getElementById("distributionChart").getContext("2d");
   const data = generateTheoreticalData(distributionType);
+
+  // Calculate theoretical stats for markers
+  const stats = calculateTheoreticalStats(distributionType);
 
   // Destroy existing chart if it exists
   if (distributionChart) {
@@ -150,6 +225,10 @@ function updateDistributionChart(distributionType) {
         },
         legend: {
           display: false,
+        },
+        verticalLines: {
+          average: stats.average,
+          p99: stats.p99,
         },
       },
       scales: {
