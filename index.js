@@ -288,17 +288,16 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
   }
 
   // Add confidence interval background shading
-  const ciData = [];
+  const ciLowerData = [];
+  const ciUpperData = [];
   if (results.sampled && results.sampled.p99) {
     const ciLower = results.sampled.p99.lower;
     const ciUpper = results.sampled.p99.upper;
 
-    // Create a filled area dataset for the confidence interval
+    // Create line datasets for upper and lower bounds
     for (let i = 0; i <= numRuns + 1; i++) {
-      ciData.push({ x: i, y: ciLower });
-    }
-    for (let i = numRuns + 1; i >= 0; i--) {
-      ciData.push({ x: i, y: ciUpper });
+      ciLowerData.push({ x: i, y: ciLower });
+      ciUpperData.push({ x: i, y: ciUpper });
     }
   }
 
@@ -308,16 +307,30 @@ function drawP99ScatterPlot(results, yAxisMode = "full") {
       datasets: [
         {
           label: "95% Confidence Interval",
-          data: ciData,
+          data: ciUpperData,
           backgroundColor: "rgba(128, 128, 128, 0.2)",
-          borderColor: "rgba(128, 128, 128, 0.3)",
+          borderColor: "rgba(128, 128, 128, 0.4)",
           borderWidth: 1,
-          fill: true,
+          fill: "+1", // Fill to the next dataset (ciLowerData)
           pointRadius: 0,
           pointHoverRadius: 0,
           showLine: true,
           tension: 0,
           order: 3, // Draw behind other datasets
+          type: "line",
+        },
+        {
+          label: "", // Empty label so it doesn't show in legend
+          data: ciLowerData,
+          backgroundColor: "rgba(128, 128, 128, 0.2)",
+          borderColor: "rgba(128, 128, 128, 0.4)",
+          borderWidth: 1,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          showLine: true,
+          tension: 0,
+          order: 3,
+          type: "line",
         },
         {
           label: "True P99",

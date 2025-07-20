@@ -25,4 +25,4 @@
 
 - make a real project structure, with code in modules
 - make it use streaming instead of holding all events in memory
-- make CI level a slider?
+- make CI level a slider
