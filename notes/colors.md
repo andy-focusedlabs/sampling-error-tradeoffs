@@ -3,8 +3,8 @@
 ## Main Colors
 
 Fog #F5F7FA
-Pacific | Cobalt #0177CC
-Slate | Text/Bkgs #25303E
+Pacific #0177CC
+Slate #25303E
 Denim #02487B
 Honey #FFBC03
 Tango #F16907
