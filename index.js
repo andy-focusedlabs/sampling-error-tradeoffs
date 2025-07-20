@@ -4,6 +4,9 @@ let latestResults = null;
 let updateTimer = null;
 let isUpdating = false;
 
+// Chart instance
+let distributionChart = null;
+
 // Distribution generators
 const distributions = {
   exponential: () => -Math.log(Math.random()) * 100,
@@ -26,7 +29,162 @@ const distributions = {
   },
 };
 
+// Theoretical distribution functions for plotting
+const theoreticalDistributions = {
+  exponential: (x) => {
+    const lambda = 1 / 100; // scale parameter
+    return x >= 0 ? lambda * Math.exp(-lambda * x) : 0;
+  },
+  normal: (x) => {
+    const mu = 100;
+    const sigma = 20;
+    return (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+  },
+  uniform: (x) => {
+    return x >= 0 && x <= 200 ? 1 / 200 : 0;
+  },
+  lognormal: (x) => {
+    if (x <= 0) return 0;
+    const mu = 4;
+    const sigma = 1;
+    return (1 / (x * sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((Math.log(x) - mu) / sigma, 2));
+  },
+  bimodal: (x) => {
+    // Mixture of two uniform distributions
+    const pdf1 = x >= 25 && x <= 75 ? 1 / 50 : 0;
+    const pdf2 = x >= 125 && x <= 175 ? 1 / 50 : 0;
+    return 0.5 * pdf1 + 0.5 * pdf2;
+  },
+};
+
+// Generate theoretical distribution data for plotting
+function generateTheoreticalData(distributionType, numPoints = 200) {
+  const theoreticalFunc = theoreticalDistributions[distributionType];
+  const data = [];
+
+  // Determine appropriate range for each distribution
+  let minX, maxX;
+  switch (distributionType) {
+    case "exponential":
+      minX = 0;
+      maxX = 500;
+      break;
+    case "normal":
+      minX = 20;
+      maxX = 180;
+      break;
+    case "uniform":
+      minX = 0;
+      maxX = 200;
+      break;
+    case "lognormal":
+      minX = 1;
+      maxX = 300;
+      break;
+    case "bimodal":
+      minX = 0;
+      maxX = 200;
+      break;
+    default:
+      minX = 0;
+      maxX = 200;
+  }
+
+  const step = (maxX - minX) / numPoints;
+  for (let i = 0; i <= numPoints; i++) {
+    const x = minX + i * step;
+    const y = theoreticalFunc(x);
+    data.push({ x, y });
+  }
+
+  return data;
+}
+
+// Create or update the distribution chart
+function updateDistributionChart(distributionType) {
+  const ctx = document.getElementById("distributionChart").getContext("2d");
+  const data = generateTheoreticalData(distributionType);
+
+  // Destroy existing chart if it exists
+  if (distributionChart) {
+    distributionChart.destroy();
+  }
+
+  // Get distribution name for title
+  const distributionNames = {
+    exponential: "Exponential Distribution (λ=1)",
+    normal: "Normal Distribution (μ=100, σ=20)",
+    uniform: "Uniform Distribution (0-200)",
+    lognormal: "Log-Normal Distribution (μ=4, σ=1)",
+    bimodal: "Bimodal Distribution",
+  };
+
+  distributionChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: [
+        {
+          label: "Probability Density",
+          data: data,
+          borderColor: "#007acc",
+          backgroundColor: "rgba(0, 122, 204, 0.1)",
+          fill: true,
+          tension: 0.1,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      aspectRatio: 2,
+      plugins: {
+        title: {
+          display: true,
+          text: distributionNames[distributionType] || "Distribution",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
+        legend: {
+          display: false,
+        },
+      },
+      scales: {
+        x: {
+          type: "linear",
+          title: {
+            display: true,
+            text: "Value",
+          },
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Probability Density",
+          },
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+          beginAtZero: true,
+        },
+      },
+      interaction: {
+        intersect: false,
+        mode: "index",
+      },
+    },
+  });
+}
+
 // Generate synthetic event data
+// we should be able to use a streaming model instead, retaining only as much as we need to calculate the aggregations.
+// For a perfect p99 though, we might need all of it? ... or all of it in the top 5% of expected values.
 async function generateEvents(count, distributionType) {
   // Limit to prevent memory issues
   const maxEvents = 10000000; // 10M events max
@@ -56,6 +214,8 @@ async function generateEvents(count, distributionType) {
 }
 
 // Sample events using systematic sampling
+// Since events are generated randomly, this is equivalent to random... except that it is more precise.
+// Perhaps randomly sampling is more accurate to how Refinery does this, but
 function sampleEvents(events, sampleRate) {
   const sampled = [];
   for (let i = 0; i < events.length; i += sampleRate) {
@@ -179,6 +339,9 @@ async function updateDisplay() {
     // Update slider displays
     document.getElementById("volumeValue").textContent = volume.toLocaleString();
     document.getElementById("sampleRateValue").textContent = `1:${sampleRate}`;
+
+    // Update distribution chart
+    updateDistributionChart(distributionType);
 
     // Adjust number of runs based on volume for performance
     let numRuns;

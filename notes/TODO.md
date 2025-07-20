@@ -3,6 +3,7 @@
 - make the sliders land on round numbers
 - make the default distribution 'normal'
 - use Honeycomb colors
+- make it display event count bef
 
 - understand the code
 
@@ -13,3 +14,4 @@
 - then think about how to represent error bars.
 
 - provide a graph of the distribution
+- add a power law distribution
