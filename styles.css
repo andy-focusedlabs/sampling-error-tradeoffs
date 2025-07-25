@@ -366,6 +366,14 @@ select {
   text-align: center;
 }
 
+.describe-sampled-events {
+  color: var(--hc-red500);
+}
+
+.describe-unsampled-events {
+  color: var(--hc-lime);
+}
+
 .explanation::before {
   content: "";
   position: absolute;
@@ -386,11 +394,6 @@ select {
   color: var(--hc-slate);
   font-size: 14px;
   line-height: 1.4;
-}
-
-.explanation p:first-child {
-  font-weight: bold;
-  color: var(--hc-pacific);
 }
 
 .explanation p:last-child {

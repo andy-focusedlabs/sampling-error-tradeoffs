@@ -1,4 +1,4 @@
-import { HONEYCOMB_COLORS } from './constants.js';
+import { HONEYCOMB_COLORS } from "./constants.js";
 
 // Custom plugin to draw vertical lines for average and P99
 const verticalLinePlugin = {
@@ -1123,13 +1123,11 @@ function updateExplanation(volume, sampleRate, numRuns) {
   explanationDiv.style.setProperty("--bottom-right-x", bottomRightX);
 
   explanationDiv.innerHTML = `
-    <p><span style="color: ${HONEYCOMB_COLORS.lime}; font-weight: bold;">${volume.toLocaleString()} events go in</span></p>
-    <p>to ${numRuns} simulations</p>
-    <p>Sampled at a rate of 1:${sampleRate}</p>
-    <p>Saving you ${percentageReduction}%</p>
-    <p><span style="color: ${HONEYCOMB_COLORS.red500}; font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
+    <p><span style="color: ${HONEYCOMB_COLORS.lime}; font-weight: bold;">${volume.toLocaleString()} events go in</span> to ${numRuns} simulations</p>
+    <p>Sampled at a rate of 1:${sampleRate} -- Saving you ${percentageReduction}%</p>
+    <p><span class="describe-sampled-events" style="font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
     <p>Then we aggregate the sampled events.</p>
-    <p>The following charts compare the results of aggregating sampled events (knowing the sample rate) vs aggregating the full set of events.</p>
+    <p>The following charts compare the results of aggregating <span class="describe-sampled-events">sampled events</span> (accounting for the sample rate) vs aggregating the <span class="describe-unsampled-events">full set of events</span>.</p>
   `;
 }
 
