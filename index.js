@@ -89,10 +89,10 @@ const distributions = {
 
 const distributionDisplayNames = {
   normal: "Normal distribution",
-  exponential: "Exponential distribution", 
+  exponential: "Exponential distribution",
   uniform: "Uniform distribution",
   lognormal: "Log-Normal distribution",
-  bimodal: "Bimodal distribution"
+  bimodal: "Bimodal distribution",
 };
 
 function generateChartTitle(metricType, distributionType, volume, sampleRate) {
@@ -366,25 +366,25 @@ function calculateErrorBars(trueValues, sampledValues) {
   if (trueValues.length !== sampledValues.length) {
     throw new Error("True and sampled value arrays must have the same length");
   }
-  
+
   const differences = [];
   for (let i = 0; i < trueValues.length; i++) {
     differences.push(trueValues[i] - sampledValues[i]);
   }
-  
+
   // Sort differences to calculate percentiles
   differences.sort((a, b) => a - b);
-  
+
   const n = differences.length;
   const lowerIndex = Math.floor(n * 0.025); // 2.5th percentile
   const upperIndex = Math.floor(n * 0.975); // 97.5th percentile
-  
+
   const lowerError = Math.abs(differences[lowerIndex]);
   const upperError = Math.abs(differences[upperIndex]);
-  
+
   return {
     lower: lowerError,
-    upper: upperError
+    upper: upperError,
   };
 }
 
@@ -437,10 +437,7 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
   }
 
   // Calculate error bars for the sampled data
-  const errorBars = calculateErrorBars(
-    results.scatterPlotData[trueDataKey], 
-    results.scatterPlotData[sampledDataKey]
-  );
+  const errorBars = calculateErrorBars(results.scatterPlotData[trueDataKey], results.scatterPlotData[sampledDataKey]);
 
   // Create error bar data for each sampled point
   const errorBarData = [];
@@ -450,10 +447,9 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
       x: i + 1,
       y: sampledY,
       yMin: sampledY - errorBars.lower,
-      yMax: sampledY + errorBars.upper
+      yMax: sampledY + errorBars.upper,
     });
   }
-
 
   const chart = new Chart(ctx, {
     type: "scatter",
@@ -472,10 +468,10 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
         // Error bar vertical lines
         {
           label: "Error Bars",
-          data: errorBarData.flatMap(point => [
+          data: errorBarData.flatMap((point) => [
             { x: point.x, y: point.yMin },
             { x: point.x, y: point.yMax },
-            { x: null, y: null } // Break line between error bars
+            { x: null, y: null }, // Break line between error bars
           ]),
           borderColor: config.sampledColor + "80", // 50% opacity
           backgroundColor: "transparent",
@@ -490,13 +486,13 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
         // Error bar horizontal caps
         {
           label: "",
-          data: errorBarData.flatMap(point => [
+          data: errorBarData.flatMap((point) => [
             { x: point.x - 0.1, y: point.yMin },
             { x: point.x + 0.1, y: point.yMin },
             { x: null, y: null },
             { x: point.x - 0.1, y: point.yMax },
             { x: point.x + 0.1, y: point.yMax },
-            { x: null, y: null }
+            { x: null, y: null },
           ]),
           borderColor: config.sampledColor + "80", // 50% opacity
           backgroundColor: "transparent",
@@ -527,10 +523,11 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
       plugins: {
         title: {
           display: true,
-          text: (distributionType && volume && sampleRate) 
-            ? generateChartTitle(metricType, distributionType, volume, sampleRate) + 
-              ` | Error bars: +${errorBars.upper.toFixed(2)}, -${errorBars.lower.toFixed(2)}`
-            : config.title,
+          text:
+            distributionType && volume && sampleRate
+              ? generateChartTitle(metricType, distributionType, volume, sampleRate) +
+                ` → 95% Confidence Interval: +${errorBars.upper.toFixed(0)}, -${errorBars.lower.toFixed(0)}`
+              : config.title,
           font: {
             size: 14,
             weight: "bold",
@@ -677,15 +674,6 @@ function calculateAggregations(events) {
     p99: calculateP99NearestRank(values),
   };
 }
-
-
-
-
-
-
-
-
-
 
 // Run multiple simulations
 async function runSimulations(volume, sampleRate, distributionType, numRuns = 50) {
