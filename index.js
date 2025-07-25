@@ -526,7 +526,7 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
           text:
             distributionType && volume && sampleRate
               ? generateChartTitle(metricType, distributionType, volume, sampleRate) +
-                ` → 95% Confidence Interval: +${errorBars.upper.toFixed(0)}, -${errorBars.lower.toFixed(0)}`
+                ` → 95% Confidence Interval: ±${((Math.max(errorBars.upper, errorBars.lower) / results.true[metricType]) * 100).toFixed(1)}%`
               : config.title,
           font: {
             size: 14,
