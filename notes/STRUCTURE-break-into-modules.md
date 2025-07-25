@@ -36,7 +36,7 @@ Please list options here:
 
 **5. Rollup** no
 
-**Recommendation**: Start with **Native ES Modules** - split your code into modules and use browser-native imports. If you need a build step later, add **Vite** for its simplicity and transparency.
+**Recommendation (approved) **: Start with **Native ES Modules** - split your code into modules and use browser-native imports. If you need a build step later, add **Vite** for its simplicity and transparency.
 
 ## Step 2: Break out one module
 
