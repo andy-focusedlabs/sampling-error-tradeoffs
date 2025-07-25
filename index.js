@@ -526,7 +526,10 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
           text:
             distributionType && volume && sampleRate
               ? generateChartTitle(metricType, distributionType, volume, sampleRate) +
-                ` → 95% Confidence Interval: +${((errorBars.upper / results.true[metricType]) * 100).toFixed(1)}%, -${((errorBars.lower / results.true[metricType]) * 100).toFixed(1)}%`
+                ` → 95% Confidence Interval: +${((errorBars.upper / results.true[metricType]) * 100).toFixed(1)}%, -${(
+                  (errorBars.lower / results.true[metricType]) *
+                  100
+                ).toFixed(1)}%`
               : config.title,
           font: {
             size: 14,
@@ -787,7 +790,6 @@ function updateExplanation(volume, sampleRate, numRuns) {
     <p>Sampled at a rate of 1:${sampleRate} -- Saving you ${percentageReduction}%</p>
     <p><span class="describe-sampled-events" style="font-weight: bold;">About ${sampledEvents.toLocaleString()} events come out</span></p>
     <p>Then we aggregate the sampled events.</p>
-    <p>The following charts compare the results of aggregating <span class="describe-sampled-events">sampled events</span> (accounting for the sample rate) vs aggregating the <span class="describe-unsampled-events">full set of events</span>.</p>
   `;
 }
 
