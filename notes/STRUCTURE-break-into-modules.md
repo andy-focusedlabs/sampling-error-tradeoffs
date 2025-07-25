@@ -17,32 +17,28 @@ What build tools should we add to the project to make modularity possible? We wa
 Please list options here:
 
 **1. Native ES Modules (No Build Tool)**
+
 - Use `<script type="module">` in HTML
 - Import/export syntax works directly in modern browsers
 - Zero configuration, maximum transparency
 - Simply split `index.js` into modules and import them
 
-**2. Vite**
-- Minimal configuration (`npm create vite@latest . -- --template vanilla`)
-- Native ES modules in development, optional bundling for production
-- Hot module replacement for development
-- Very transparent, builds only when needed
+**2. Vite** nfw
 
-**3. Parcel**
-- Zero-config bundler (`npm install -D parcel`)
-- Automatically handles ES modules
-- Simple `parcel index.html` command
-- Good balance of simplicity and features
+**3. Parcel** no
 
 **4. esbuild (standalone)**
+
 - Minimal setup, very fast
 - Can bundle or just transform modules
 - Single command: `esbuild index.js --bundle --outfile=dist/index.js`
 - Excellent for proof-of-concept work
 
-**5. Rollup**
-- Designed specifically for libraries and simple bundling
-- Clean ES module handling
-- Good for understanding what's happening in the build
+**5. Rollup** no
 
 **Recommendation**: Start with **Native ES Modules** - split your code into modules and use browser-native imports. If you need a build step later, add **Vite** for its simplicity and transparency.
+
+## Step 2: Break out one module
+
+Let's break out a "constants" module that has the colors in it.
+This will prove out the process of creating a module and importing it.
