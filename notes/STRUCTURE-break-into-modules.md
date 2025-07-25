@@ -50,3 +50,45 @@ We can create modules for
 - the vertical line chart plugin
 
 What other modules make sense to you?
+
+Based on analysis of the ~1275 line index.js file, here are logical modules:
+
+### 1. **Chart Visualization Module** (`charts.js`)
+- `verticalLinePlugin` - Custom Chart.js plugin for drawing vertical lines
+- `metricConfigs` - Configuration objects for different metric scatter plots  
+- `drawMetricScatterPlot()` - Generic scatter plot rendering function
+- `updateDistributionChart()` - Distribution chart creation/update
+- Chart instance variables
+
+### 2. **Distribution Module** (`distributions.js`)
+- `distributions` object - Random number generators for each distribution
+- `theoreticalDistributions` object - Theoretical PDF functions
+- `generateTheoreticalData()` - Creates theoretical distribution data for plotting
+- `calculateTheoreticalStats()` - Calculates theoretical average and P99
+
+### 3. **Statistical Functions Module** (`statistics.js`)
+- `calculateP99NearestRank()` - P99 calculation using nearest rank
+- `calculateAggregations()` - Calculates count, sum, average, P99 for events
+- Mathematical helpers (normalInverse, betaInverse, etc.)
+
+### 4. **Confidence Intervals Module** (`confidence-intervals.js`)
+- All theoretical and empirical confidence interval calculation methods
+- `calculateTheoreticalCountConfidenceInterval()`, `calculateTheoreticalSumConfidenceInterval()`, etc.
+
+### 5. **Data Generation Module** (`data-generation.js`)
+- `generateEvents()` - Generates synthetic event data with batch processing
+- `sampleEvents()` - Random sampling implementation
+
+### 6. **Simulation Engine Module** (`simulation.js`)
+- `runSimulations()` - Main simulation runner that coordinates everything
+- Simulation results data structures and aggregation
+
+### 7. **UI Controller Module** (`ui-controller.js`)
+- `updateDisplay()` - Main orchestration function
+- `scheduleUpdate()` - Debounced update handler
+- `updateExplanation()` - Updates explanation text and styling
+- Event listeners and global state management
+
+### 8. **Utilities Module** (`utils.js`)
+- `formatNumber()` - Number formatting for display
+- Other helper functions
