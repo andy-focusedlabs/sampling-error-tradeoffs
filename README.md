@@ -10,7 +10,8 @@ Deployed URL on GitHub Pages
 ## How to run
 
 ```
-python -m http.server 8000
+npm install -g live-server
+./run
 ```
 
 ## Disclaimer
