@@ -76,6 +76,10 @@ label {
   color: var(--hc-gray700);
 }
 
+.input-parameter-title {
+  color: var(--hc-indigo);
+}
+
 .slider-container {
   display: flex;
   align-items: center;

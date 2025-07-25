@@ -222,7 +222,6 @@ function updateDistributionChart(distributionType) {
 // Metric configuration for scatter plots
 const metricConfigs = {
   count: {
-    title: "COUNT For Each Simulation, Before and After Sampling",
     yAxisLabel: "Count",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
