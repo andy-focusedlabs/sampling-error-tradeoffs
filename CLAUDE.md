@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **sampling uncertainty demo** - an interactive web application that visualizes how sampling rates affect aggregation accuracy in data analysis. The project demonstrates the tradeoffs between computational efficiency (lower sample rates) and statistical precision (higher accuracy), specifically modeling how Honeycomb's Refinery samples traces.
 
+**IMPORTANT**: This is a **proof-of-concept project** and will always remain so. It is not intended for production use or significant expansion beyond its current educational purpose.
+
 **Key Purpose**: Help users understand when sampling becomes problematic for different aggregation metrics (COUNT, SUM, AVERAGE, P99) across various probability distributions.
 
 ## Architecture
@@ -49,9 +51,9 @@ npx serve
 ```
 
 ### Deployment
-The app is deployed to GitHub Pages at: https://jessitron.github.io/sampling-error-tradeoffs/
+**GitHub Pages**: The app is deployed automatically to GitHub Pages at: https://jessitron.github.io/sampling-error-tradeoffs/
 
-Simply push changes to main branch - no build step required.
+Simply push changes to the main branch - GitHub Pages handles deployment automatically with no build step required. This aligns with the proof-of-concept nature of the project.
 
 ## Key Implementation Details
 
