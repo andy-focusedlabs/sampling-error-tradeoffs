@@ -25,9 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Local Development
 ```bash
-python -m http.server 8000
-# OR
-npx serve
+./run
 ```
 
 ### Deployment

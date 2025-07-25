@@ -361,6 +361,33 @@ const metricConfigs = {
   },
 };
 
+// Calculate error bar values for 95% confidence interval
+function calculateErrorBars(trueValues, sampledValues) {
+  if (trueValues.length !== sampledValues.length) {
+    throw new Error("True and sampled value arrays must have the same length");
+  }
+  
+  const differences = [];
+  for (let i = 0; i < trueValues.length; i++) {
+    differences.push(trueValues[i] - sampledValues[i]);
+  }
+  
+  // Sort differences to calculate percentiles
+  differences.sort((a, b) => a - b);
+  
+  const n = differences.length;
+  const lowerIndex = Math.floor(n * 0.025); // 2.5th percentile
+  const upperIndex = Math.floor(n * 0.975); // 97.5th percentile
+  
+  const lowerError = Math.abs(differences[lowerIndex]);
+  const upperError = Math.abs(differences[upperIndex]);
+  
+  return {
+    lower: lowerError,
+    upper: upperError
+  };
+}
+
 // Generic scatter plot function for any metric
 function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distributionType = null, volume = null, sampleRate = null) {
   const config = metricConfigs[metricType];
@@ -406,6 +433,24 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
     sampledData.push({
       x: i + 1, // Simulation number (1-based)
       y: results.scatterPlotData[sampledDataKey][i],
+    });
+  }
+
+  // Calculate error bars for the sampled data
+  const errorBars = calculateErrorBars(
+    results.scatterPlotData[trueDataKey], 
+    results.scatterPlotData[sampledDataKey]
+  );
+
+  // Create error bar data for each sampled point
+  const errorBarData = [];
+  for (let i = 0; i < numRuns; i++) {
+    const sampledY = results.scatterPlotData[sampledDataKey][i];
+    errorBarData.push({
+      x: i + 1,
+      y: sampledY,
+      yMin: sampledY - errorBars.lower,
+      yMax: sampledY + errorBars.upper
     });
   }
 
@@ -466,6 +511,45 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
           pointStyle: config.sampledPointStyle,
           order: config.sampledOrder,
         },
+        // Error bar vertical lines
+        {
+          label: "Error Bars",
+          data: errorBarData.flatMap(point => [
+            { x: point.x, y: point.yMin },
+            { x: point.x, y: point.yMax },
+            { x: null, y: null } // Break line between error bars
+          ]),
+          borderColor: config.sampledColor + "80", // 50% opacity
+          backgroundColor: "transparent",
+          borderWidth: 1,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          showLine: true,
+          spanGaps: false,
+          order: config.sampledOrder - 0.5,
+          type: "line",
+        },
+        // Error bar horizontal caps
+        {
+          label: "",
+          data: errorBarData.flatMap(point => [
+            { x: point.x - 0.1, y: point.yMin },
+            { x: point.x + 0.1, y: point.yMin },
+            { x: null, y: null },
+            { x: point.x - 0.1, y: point.yMax },
+            { x: point.x + 0.1, y: point.yMax },
+            { x: null, y: null }
+          ]),
+          borderColor: config.sampledColor + "80", // 50% opacity
+          backgroundColor: "transparent",
+          borderWidth: 1,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          showLine: true,
+          spanGaps: false,
+          order: config.sampledOrder - 0.5,
+          type: "line",
+        },
         {
           label: config.trueLabel,
           data: trueData,
@@ -486,7 +570,8 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distribu
         title: {
           display: true,
           text: (distributionType && volume && sampleRate) 
-            ? generateChartTitle(metricType, distributionType, volume, sampleRate)
+            ? generateChartTitle(metricType, distributionType, volume, sampleRate) + 
+              ` | Error bars: +${errorBars.upper.toFixed(2)}, -${errorBars.lower.toFixed(2)}`
             : config.title,
           font: {
             size: 14,
