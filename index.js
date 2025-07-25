@@ -242,7 +242,6 @@ const metricConfigs = {
     },
   },
   sum: {
-    title: "SUM For Each Simulation, Before and After Sampling",
     yAxisLabel: "Sum",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
@@ -263,7 +262,6 @@ const metricConfigs = {
     },
   },
   average: {
-    title: "AVERAGE For Each Simulation, Before and After Sampling",
     yAxisLabel: "Average",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
@@ -280,7 +278,6 @@ const metricConfigs = {
     formatValue: (value) => value.toFixed(2),
   },
   p99: {
-    title: "P99 For Each Simulation, Before and After Sampling",
     yAxisLabel: "P99 Value",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
