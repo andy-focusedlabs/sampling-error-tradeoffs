@@ -1,5 +1,53 @@
 import { HONEYCOMB_COLORS } from "./constants.js";
-import { verticalLinePlugin } from "./verticalLinePlugin.js";
+
+// Custom plugin to draw vertical lines for average and P99
+const verticalLinePlugin = {
+  id: "verticalLines",
+  afterDraw: (chart) => {
+    if (chart.config.options.plugins.verticalLines) {
+      const { ctx, chartArea, scales } = chart;
+      const { average, p99 } = chart.config.options.plugins.verticalLines;
+
+      ctx.save();
+
+      // Draw average line
+      if (average !== undefined) {
+        const x = scales.x.getPixelForValue(average);
+        ctx.strokeStyle = HONEYCOMB_COLORS.lime;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+
+        // Draw average label
+        ctx.fillStyle = HONEYCOMB_COLORS.lime;
+        ctx.font = "11px Arial";
+        ctx.fillText(`Avg: ${average.toFixed(1)}`, x + 5, chartArea.top + 15);
+      }
+
+      // Draw P99 line
+      if (p99 !== undefined) {
+        const x = scales.x.getPixelForValue(p99);
+        ctx.strokeStyle = HONEYCOMB_COLORS.red500;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(x, chartArea.top);
+        ctx.lineTo(x, chartArea.bottom);
+        ctx.stroke();
+
+        // Draw P99 label
+        ctx.fillStyle = HONEYCOMB_COLORS.red500;
+        ctx.font = "11px Arial";
+        ctx.fillText(`P99: ${p99.toFixed(1)}`, x + 5, chartArea.top + 30);
+      }
+
+      ctx.restore();
+    }
+  },
+};
 
 // Register the custom plugin
 Chart.register(verticalLinePlugin);
@@ -38,6 +86,20 @@ const distributions = {
     return Math.random() < 0.5 ? Math.random() * 50 + 25 : Math.random() * 50 + 125;
   },
 };
+
+const distributionDisplayNames = {
+  normal: "Normal distribution",
+  exponential: "Exponential distribution", 
+  uniform: "Uniform distribution",
+  lognormal: "Log-Normal distribution",
+  bimodal: "Bimodal distribution"
+};
+
+function generateChartTitle(metricType, distributionType, volume, sampleRate) {
+  const distributionName = distributionDisplayNames[distributionType] || distributionType;
+  const formattedVolume = volume.toLocaleString();
+  return `${distributionName}; ${formattedVolume} events sampled at 1:${sampleRate}`;
+}
 
 // Theoretical distribution functions for plotting
 const theoreticalDistributions = {
@@ -222,6 +284,7 @@ function updateDistributionChart(distributionType) {
 // Metric configuration for scatter plots
 const metricConfigs = {
   count: {
+    title: "COUNT For Each Simulation, Before and After Sampling",
     yAxisLabel: "Count",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
@@ -242,6 +305,7 @@ const metricConfigs = {
     },
   },
   sum: {
+    title: "SUM For Each Simulation, Before and After Sampling",
     yAxisLabel: "Sum",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
@@ -262,6 +326,7 @@ const metricConfigs = {
     },
   },
   average: {
+    title: "AVERAGE For Each Simulation, Before and After Sampling",
     yAxisLabel: "Average",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
@@ -278,6 +343,7 @@ const metricConfigs = {
     formatValue: (value) => value.toFixed(2),
   },
   p99: {
+    title: "P99 For Each Simulation, Before and After Sampling",
     yAxisLabel: "P99 Value",
     trueColor: HONEYCOMB_COLORS.lime,
     sampledColor: HONEYCOMB_COLORS.red500,
@@ -296,7 +362,7 @@ const metricConfigs = {
 };
 
 // Generic scatter plot function for any metric
-function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
+function drawMetricScatterPlot(metricType, results, yAxisMode = "full", distributionType = null, volume = null, sampleRate = null) {
   const config = metricConfigs[metricType];
   if (!config) {
     throw new Error(`Unknown metric type: ${metricType}`);
@@ -419,7 +485,9 @@ function drawMetricScatterPlot(metricType, results, yAxisMode = "full") {
       plugins: {
         title: {
           display: true,
-          text: config.title,
+          text: (distributionType && volume && sampleRate) 
+            ? generateChartTitle(metricType, distributionType, volume, sampleRate)
+            : config.title,
           font: {
             size: 14,
             weight: "bold",
@@ -1129,10 +1197,10 @@ async function updateDisplay() {
     const sumYAxisMode = document.getElementById("sumYAxisToggle").value;
     const averageYAxisMode = document.getElementById("averageYAxisToggle").value;
 
-    drawMetricScatterPlot("count", results, countYAxisMode);
-    drawMetricScatterPlot("sum", results, sumYAxisMode);
-    drawMetricScatterPlot("average", results, averageYAxisMode);
-    drawMetricScatterPlot("p99", results, p99YAxisMode);
+    drawMetricScatterPlot("count", results, countYAxisMode, distributionType, volume, sampleRate);
+    drawMetricScatterPlot("sum", results, sumYAxisMode, distributionType, volume, sampleRate);
+    drawMetricScatterPlot("average", results, averageYAxisMode, distributionType, volume, sampleRate);
+    drawMetricScatterPlot("p99", results, p99YAxisMode, distributionType, volume, sampleRate);
 
     // Store results for future reference
     latestResults = results;
@@ -1175,28 +1243,44 @@ document.getElementById("distribution").addEventListener("change", scheduleUpdat
 document.getElementById("countYAxisToggle").addEventListener("change", () => {
   if (latestResults) {
     const yAxisMode = document.getElementById("countYAxisToggle").value;
-    drawMetricScatterPlot("count", latestResults, yAxisMode);
+    const distributionType = document.getElementById("distribution").value;
+    const volumeSlider = document.getElementById("volume").value;
+    const volume = Math.round(Math.pow(10, parseFloat(volumeSlider)));
+    const sampleRate = parseInt(document.getElementById("sampleRate").value);
+    drawMetricScatterPlot("count", latestResults, yAxisMode, distributionType, volume, sampleRate);
   }
 });
 
 document.getElementById("sumYAxisToggle").addEventListener("change", () => {
   if (latestResults) {
     const yAxisMode = document.getElementById("sumYAxisToggle").value;
-    drawMetricScatterPlot("sum", latestResults, yAxisMode);
+    const distributionType = document.getElementById("distribution").value;
+    const volumeSlider = document.getElementById("volume").value;
+    const volume = Math.round(Math.pow(10, parseFloat(volumeSlider)));
+    const sampleRate = parseInt(document.getElementById("sampleRate").value);
+    drawMetricScatterPlot("sum", latestResults, yAxisMode, distributionType, volume, sampleRate);
   }
 });
 
 document.getElementById("averageYAxisToggle").addEventListener("change", () => {
   if (latestResults) {
     const yAxisMode = document.getElementById("averageYAxisToggle").value;
-    drawMetricScatterPlot("average", latestResults, yAxisMode);
+    const distributionType = document.getElementById("distribution").value;
+    const volumeSlider = document.getElementById("volume").value;
+    const volume = Math.round(Math.pow(10, parseFloat(volumeSlider)));
+    const sampleRate = parseInt(document.getElementById("sampleRate").value);
+    drawMetricScatterPlot("average", latestResults, yAxisMode, distributionType, volume, sampleRate);
   }
 });
 
 document.getElementById("p99YAxisToggle").addEventListener("change", () => {
   if (latestResults) {
     const yAxisMode = document.getElementById("p99YAxisToggle").value;
-    drawMetricScatterPlot("p99", latestResults, yAxisMode);
+    const distributionType = document.getElementById("distribution").value;
+    const volumeSlider = document.getElementById("volume").value;
+    const volume = Math.round(Math.pow(10, parseFloat(volumeSlider)));
+    const sampleRate = parseInt(document.getElementById("sampleRate").value);
+    drawMetricScatterPlot("p99", latestResults, yAxisMode, distributionType, volume, sampleRate);
   }
 });
 
