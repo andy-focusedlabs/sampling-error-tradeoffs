@@ -43,7 +43,10 @@ Please list options here:
 Let's break out a "constants" module that has the colors in it.
 This will prove out the process of creating a module and importing it.
 
-## Step 3: Structure code into other modules
+## Step 3: Plan all the modules
 
-Create modules for
+We can create modules for
+
 - the vertical line chart plugin
+
+What other modules make sense to you?
