@@ -5,7 +5,7 @@ An interactive web-based demonstration of how sampling rates affect aggregation 
 This represents how Honeycomb's Refinery samples traces. Sampling drastically reduces costs by keeping only a representative sample of data, instead of all of it, when the data is repetitive. The aggregations over the sampled data are as useful as over the original data. However, sampling too heavily impacts the accuracy of aggregations.
 
 Deployed URL on GitHub Pages
-[https://jessitron.github.io/sampling-error-tradeoffs/]()
+[https://jessitron.github.io/sampling-error-tradeoffs/](https://jessitron.github.io/sampling-error-tradeoffs/)
 
 ## How to run
 
